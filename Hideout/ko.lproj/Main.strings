@@ -1,0 +1,131 @@
+/* Class = "NSTextFieldCell"; title = "Settings"; ObjectID = "1Is-Ut-a9h"; */
+"1Is-Ut-a9h.title" = "설정";
+
+/* Class = "NSMenuItem"; title = "Hideout"; ObjectID = "1Xt-HY-uBw"; */
+"1Xt-HY-uBw.title" = "Hideout";
+
+/* Class = "NSTextFieldCell"; title = "Hideout"; ObjectID = "2xp-Ht-xa6"; */
+"2xp-Ht-xa6.title" = "Hideout";
+
+/* Class = "NSTextFieldCell"; title = "Version"; ObjectID = "4Au-5A-dYq"; */
+"4Au-5A-dYq.title" = "버전";
+
+/* Class = "NSMenuItem"; title = "Quit Hideout"; ObjectID = "4sb-4s-VLi"; */
+"4sb-4s-VLi.title" = "Hideout 종료";
+
+/* Class = "NSMenuItem"; title = "About Hideout"; ObjectID = "5kV-Vb-QxS"; */
+"5kV-Vb-QxS.title" = "Hideout 정보";
+
+/* Class = "NSButtonCell"; title = "Use the full MenuBar on expanding"; ObjectID = "8z8-6N-wnc"; */
+"8z8-6N-wnc.title" = "확장할 때 전체 메뉴 막대 사용";
+
+/* Class = "NSMenu"; title = "Main Menu"; ObjectID = "AYu-sK-qS6"; */
+"AYu-sK-qS6.title" = "메인 메뉴";
+
+/* Class = "NSSegmentedCell"; B2x-1Q-Aei.ibShadowedLabels[0] = "General"; ObjectID = "B2x-1Q-Aei"; */
+"B2x-1Q-Aei.ibShadowedLabels[0]" = "일반";
+
+/* Class = "NSSegmentedCell"; B2x-1Q-Aei.ibShadowedLabels[1] = "About"; ObjectID = "B2x-1Q-Aei"; */
+"B2x-1Q-Aei.ibShadowedLabels[1]" = "정보";
+
+/* Class = "NSMenuItem"; title = "Preferences…"; ObjectID = "BOF-NM-1cW"; */
+"BOF-NM-1cW.title" = "환경설정…";
+
+/* Class = "NSMenuItem"; title = "30 seconds"; ObjectID = "Ch6-Z2-LyX"; */
+"Ch6-Z2-LyX.title" = "30초";
+
+/* Class = "NSTextFieldCell"; title = "Global Shortcut"; ObjectID = "HJP-Lf-rxm"; */
+"HJP-Lf-rxm.title" = "전역 단축키";
+
+/* Class = "NSButtonCell"; title = "⌫"; ObjectID = "IId-1b-leb"; */
+"IId-1b-leb.title" = "⌫";
+
+/* Class = "NSBox"; title = "Box"; ObjectID = "Jjd-1G-63n"; */
+"Jjd-1G-63n.title" = "상자";
+
+/* Class = "NSMenuItem"; title = "Show All"; ObjectID = "Kd2-mp-pUS"; */
+"Kd2-mp-pUS.title" = "모두 보기";
+
+/* Class = "NSToolbarItem"; label = "Custom View"; ObjectID = "ML6-W4-U8X"; */
+"ML6-W4-U8X.label" = "사용자 설정 보기";
+
+/* Class = "NSToolbarItem"; paletteLabel = "Custom View"; ObjectID = "ML6-W4-U8X"; */
+"ML6-W4-U8X.paletteLabel" = "사용자 설정 보기";
+
+/* Class = "NSToolbarItem"; label = "Custom View"; ObjectID = "NIO-JJ-pjq"; */
+"NIO-JJ-pjq.label" = "사용자 설정 보기";
+
+/* Class = "NSToolbarItem"; paletteLabel = "Custom View"; ObjectID = "NIO-JJ-pjq"; */
+"NIO-JJ-pjq.paletteLabel" = "사용자 설정 보기";
+
+/* Class = "NSMenuItem"; title = "Services"; ObjectID = "NMo-om-nkz"; */
+"NMo-om-nkz.title" = "서비스";
+
+/* Class = "NSMenuItem"; title = "Hide Hideout"; ObjectID = "Olw-nP-bQN"; */
+"Olw-nP-bQN.title" = "Hideout 가리기";
+
+/* Class = "NSMenuItem"; title = "Hide Others"; ObjectID = "Vdr-fp-XzO"; */
+"Vdr-fp-XzO.title" = "기타 가리기";
+
+/* Class = "NSButtonCell"; title = "Start Hideout when I log in"; ObjectID = "W1G-55-zGo"; */
+"W1G-55-zGo.title" = "로그인 시 Hideout 시작";
+
+/* Class = "NSTextFieldCell"; title = "A quiet place for your menu bar"; ObjectID = "X4W-sr-Z32"; */
+"X4W-sr-Z32.title" = "메뉴 막대를 위한 조용한 공간";
+
+/* Class = "NSMenuItem"; title = "1 minute"; ObjectID = "Zkr-Xd-Ffh"; */
+"Zkr-Xd-Ffh.title" = "1분";
+
+/* Class = "NSTextFieldCell"; title = "MIT © Danil Reznichenko"; ObjectID = "b1t-QR-iSj"; */
+"b1t-QR-iSj.title" = "MIT © Danil Reznichenko";
+
+/* Class = "NSBox"; title = "Box"; ObjectID = "bFi-aV-ejJ"; */
+"bFi-aV-ejJ.title" = "상자";
+
+/* Class = "NSMenuItem"; title = "5 seconds"; ObjectID = "bzS-lm-JvT"; */
+"bzS-lm-JvT.title" = "5초";
+
+/* Class = "NSTextFieldCell"; title = "Hidden"; ObjectID = "cXt-8R-PHo"; */
+"cXt-8R-PHo.title" = "숨김";
+
+/* Class = "NSButtonCell"; title = "Set Shortcut"; ObjectID = "fc2-jD-QNf"; */
+"fc2-jD-QNf.title" = "단축키 설정";
+
+/* Class = "NSTextFieldCell"; title = "GitHub"; ObjectID = "fqc-io-QOP"; */
+"fqc-io-QOP.title" = "GitHub";
+
+/* Class = "NSButtonCell"; title = "Show preferences on launch"; ObjectID = "hCh-Ue-NgH"; */
+"hCh-Ue-NgH.title" = "시작 시 환경설정 표시";
+
+/* Class = "NSMenu"; title = "Services"; ObjectID = "hz9-B4-Xy5"; */
+"hz9-B4-Xy5.title" = "서비스";
+
+/* Class = "NSTextFieldCell"; title = "Shown"; ObjectID = "iyS-g5-5mk"; */
+"iyS-g5-5mk.title" = "표시";
+
+/* Class = "NSTextFieldCell"; title = "In your Mac's menu bar, hold ⌘ and drag icons\nbetween sections to configure Hideout."; ObjectID = "k7C-e5-6a0"; */
+"k7C-e5-6a0.title" = "Mac 메뉴 막대에서 ⌘ 키를 누른 채 아이콘을 섹션 사이로 드래그하여 Hideout을 구성하세요.";
+
+/* Class = "NSButtonCell"; title = "Automatically hide icon after: "; ObjectID = "kg8-rW-srh"; */
+"kg8-rW-srh.title" = "다음 시간 후 아이콘 자동으로 가리기: ";
+
+/* Class = "NSBox"; title = "Box"; ObjectID = "mtL-vU-2iq"; */
+"mtL-vU-2iq.title" = "상자";
+
+/* Class = "NSMenuItem"; title = "15 seconds"; ObjectID = "rdn-Xm-fZD"; */
+"rdn-Xm-fZD.title" = "15초";
+
+/* Class = "NSTextFieldCell"; title = "Email us"; ObjectID = "sRr-sO-uV0"; */
+"sRr-sO-uV0.title" = "이메일 보내기";
+
+/* Class = "NSMenu"; title = "Hideout"; ObjectID = "uQy-DD-JDr"; */
+"uQy-DD-JDr.title" = "Hideout";
+
+/* Class = "NSMenuItem"; title = "10 seconds"; ObjectID = "z2X-nw-vxX"; */
+"z2X-nw-vxX.title" = "10초";
+
+/* Class = "NSTextFieldCell"; title = "Monday 08 Mar 9:00AM"; ObjectID = "zAH-cs-dar"; */
+"zAH-cs-dar.title" = "3월 8일 월요일 오전 9:00";
+
+/* Class = "NSTextFieldCell"; title = "General"; ObjectID = "zAf-vj-OOZ"; */
+"zAf-vj-OOZ.title" = "일반";
