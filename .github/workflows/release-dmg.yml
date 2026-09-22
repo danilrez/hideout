@@ -1,0 +1,103 @@
+name: Release DMG
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: xcode-27
+    env:
+      PROJECT: Hideout.xcodeproj
+      SCHEME: Hideout
+      CONFIGURATION: Release
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build unsigned archive
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          tag_version="${tag#v}"
+          base_version="${tag_version%%-*}"
+          app_version="$(xcodebuild \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIGURATION" \
+            -showBuildSettings \
+            | awk -F ' = ' '$1 ~ /MARKETING_VERSION/ { print $2; exit }')"
+
+          if [[ "$app_version" != "$base_version" ]]; then
+            echo "Tag $tag expects MARKETING_VERSION $base_version, found $app_version" >&2
+            exit 1
+          fi
+
+          xcodebuild archive \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration "$CONFIGURATION" \
+            -destination 'generic/platform=macOS' \
+            -archivePath "$RUNNER_TEMP/Hideout.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Create DMG
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          app_path="$RUNNER_TEMP/Hideout.xcarchive/Products/Applications/Hideout.app"
+          staging_path="$RUNNER_TEMP/Hideout-dmg"
+          dmg_path="$RUNNER_TEMP/Hideout-${tag}.dmg"
+
+          test -d "$app_path"
+          mkdir -p "$staging_path"
+          ditto "$app_path" "$staging_path/Hideout.app"
+          ln -s /Applications "$staging_path/Applications"
+
+          hdiutil create \
+            -volname "Hideout ${tag}" \
+            -srcfolder "$staging_path" \
+            -ov \
+            -format UDZO \
+            "$dmg_path"
+
+          shasum -a 256 "$dmg_path" > "$dmg_path.sha256"
+          echo "dmg=$dmg_path" >> "$GITHUB_OUTPUT"
+          echo "checksum=$dmg_path.sha256" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          release_args=(
+            "$tag"
+            "${{ steps.package.outputs.dmg }}"
+            "${{ steps.package.outputs.checksum }}"
+            --verify-tag
+            --title "Hideout ${tag}"
+            --generate-notes
+          )
+
+          if [[ "$tag" == *-* ]]; then
+            release_args+=(--prerelease)
+          fi
+
+          gh release create "${release_args[@]}"

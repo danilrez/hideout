@@ -69,6 +69,22 @@ with:
 find Hideout -name '*.strings' -print0 | xargs -0 plutil -lint
 ```
 
+## Release DMG
+
+Releases are created from version tags. Keep `MARKETING_VERSION` in the Xcode
+project aligned with the numeric part of the tag. The current beta release is:
+
+```sh
+git tag v0.1.0-beta
+git push origin v0.1.0-beta
+```
+
+The `Release DMG` workflow builds an unsigned macOS 27 archive on the Xcode 27
+runner, packages `Hideout.app` with an `Applications` shortcut into a DMG, and
+attaches the DMG and its SHA-256 checksum to a GitHub prerelease. The app can
+be dragged into `/Applications`; because it is unsigned, macOS may require a
+right-click/Open confirmation on first launch.
+
 ## Repository layout
 
 - `Hideout/` — application source, storyboard, resources, and localizations.
