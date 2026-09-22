@@ -415,7 +415,8 @@ class StatusBarController {
     private func getContextMenu() -> NSMenu {
         let menu = NSMenu()
         
-        let prefItem = NSMenuItem(title: "Preferences...".localized, action: #selector(openPreferenceViewControllerIfNeeded), keyEquivalent: "P")
+        let prefItem = NSMenuItem(title: "Settings...".localized, action: #selector(openPreferenceViewControllerIfNeeded), keyEquivalent: ",")
+        prefItem.keyEquivalentModifierMask = [.command]
         prefItem.target = self
         menu.addItem(prefItem)
         

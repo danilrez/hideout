@@ -1,26 +1,23 @@
 import AppKit
-import HotKey
 
 @main
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate{
     
     var statusBarController = StatusBarController()
-    
-    var hotKey: HotKey? {
-        didSet {
-            guard let hotKey = hotKey else { return }
-            
-            hotKey.keyDownHandler = { [weak self] in
-                self?.statusBarController.expandCollapseIfNeeded()
-            }
+
+    lazy var globalShortcutController: GlobalShortcutController = {
+        let controller = GlobalShortcutController()
+        controller.onKeyDown = { [weak self] in
+            self?.statusBarController.expandCollapseIfNeeded()
         }
-    }
+        return controller
+    }()
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         setupAutoStartApp()
         registerDefaultValues()
-        setupHotKey()
+        setupGlobalShortcut()
         openPreferencesIfNeeded()
         detectLTRLang()
     }
@@ -45,9 +42,12 @@ class AppDelegate: NSObject, NSApplicationDelegate{
          ])
     }
     
-    func setupHotKey() {
+    func setupGlobalShortcut() {
         guard let globalKey = Preferences.globalKey else {return}
-        hotKey = HotKey(keyCombo: KeyCombo(carbonKeyCode: globalKey.keyCode, carbonModifiers: globalKey.carbonFlags))
+        globalShortcutController.register(
+            keyCode: globalKey.keyCode,
+            modifiers: globalKey.carbonFlags
+        )
     }
     
     func detectLTRLang() {

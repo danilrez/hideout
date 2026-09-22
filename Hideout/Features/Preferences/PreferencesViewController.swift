@@ -1,6 +1,4 @@
 import Cocoa
-import Carbon
-import HotKey
 
 @MainActor
 class PreferencesViewController: NSViewController {
@@ -40,7 +38,7 @@ class PreferencesViewController: NSViewController {
         super.viewDidLoad()
         setupModernLayout()
         updateData()
-        loadHotkey()
+        loadGlobalShortcut()
         hideStatusBar()
         NotificationCenter.default.addObserver(self, selector: #selector(updateData), name: .prefsChanged, object: nil)
     }
@@ -73,7 +71,7 @@ class PreferencesViewController: NSViewController {
             rootStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
             rootStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
             rootStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            rootStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -16)
+            rootStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -28)
         ])
 
         let tutorialContainer = NSView()
@@ -414,7 +412,7 @@ class PreferencesViewController: NSViewController {
     // If the shortcut is cleared, clear the UI and tell AppDelegate to stop listening to the previous keybind.
     @IBAction func unregister(_ sender: Any?) {
         let appDelegate = NSApplication.shared.delegate as! AppDelegate
-        appDelegate.hotKey = nil
+        appDelegate.globalShortcutController.unregister()
         btnShortcut.title = "Set Shortcut".localized
         listening = false
         btnClear.isEnabled = false
@@ -445,7 +443,10 @@ class PreferencesViewController: NSViewController {
         btnClear.isEnabled = true
         
         let appDelegate = NSApplication.shared.delegate as! AppDelegate
-        appDelegate.hotKey = HotKey(keyCombo: KeyCombo(carbonKeyCode: UInt32(event.keyCode), carbonModifiers: event.modifierFlags.carbonFlags))
+        appDelegate.globalShortcutController.register(
+            keyCode: UInt32(event.keyCode),
+            modifiers: event.modifierFlags.carbonFlags
+        )
     }
     
     public func updateModiferFlags(_ event: NSEvent) {
@@ -472,7 +473,7 @@ class PreferencesViewController: NSViewController {
         timePopup.selectItem(at: SelectedSecond.secondToPossition(seconds: Preferences.numberOfSecondForAutoHide))
     }
     
-    private func loadHotkey() {
+    private func loadGlobalShortcut() {
         if let globalKey = Preferences.globalKey {
             updateKeybindButton(globalKey)
             updateClearButton(globalKey)

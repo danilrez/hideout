@@ -1,3 +1,4 @@
+import AppKit
 import XCTest
 @testable import Hideout
 
@@ -35,6 +36,16 @@ final class PreferencesTests: XCTestCase {
         Preferences.numberOfSecondForAutoHide = 30
 
         XCTAssertEqual(Preferences.numberOfSecondForAutoHide, 30)
+    }
+
+    func testCenteredWindowOriginUsesTheVisibleScreenFrame() {
+        let visibleFrame = NSRect(x: 1920, y: 24, width: 1440, height: 851)
+        let windowFrame = NSRect(x: 0, y: 0, width: 720, height: 449)
+
+        XCTAssertEqual(
+            WindowPlacement.centeredOrigin(for: windowFrame, in: visibleFrame),
+            NSPoint(x: 2280, y: 225)
+        )
     }
 
     private func restore(_ value: Any?, forKey key: String) {

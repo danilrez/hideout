@@ -65,11 +65,7 @@ xcuserdata/
 timeline.xctimeline
 playground.xcworkspace
 
-# Swift Package Manager
-# Add this line if you want to avoid checking in source code from Swift Package Manager dependencies.
-# Packages/
-# Package.pins
-# Package.resolved
+# Swift build products
 .build/
 
 # CocoaPods
@@ -129,3 +125,4 @@ DerivedData/
 # Local agent/tooling layer
 /_meta/
 /.planning/
+!/AGENTS.md

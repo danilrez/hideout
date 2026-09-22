@@ -1,3 +1,5 @@
+import AppKit
+import Carbon
 import XCTest
 @testable import Hideout
 
@@ -55,5 +57,16 @@ final class GlobalKeybindPreferencesTests: XCTestCase {
         let preferences = makePreferences(command: true, characters: nil)
 
         XCTAssertEqual(preferences.description, "⌘")
+    }
+
+    func testCarbonFlagsIncludeOnlyShortcutModifiers() {
+        let flags: NSEvent.ModifierFlags = [.command, .option, .control, .shift, .function, .capsLock]
+        let expected = UInt32(cmdKey) | UInt32(optionKey) | UInt32(controlKey) | UInt32(shiftKey)
+
+        XCTAssertEqual(flags.carbonFlags, expected)
+    }
+
+    func testCarbonFlagsAreZeroWithoutShortcutModifiers() {
+        XCTAssertEqual(NSEvent.ModifierFlags([.function, .capsLock]).carbonFlags, 0)
     }
 }

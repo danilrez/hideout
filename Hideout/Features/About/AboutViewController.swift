@@ -67,7 +67,7 @@ class AboutViewController: NSViewController {
         links.translatesAutoresizingMaskIntoConstraints = false
         links.addArrangedSubview(makeLinkRow(
             title: "GitHub",
-            href: "https://github.com/danilrez",
+            href: "https://github.com/danilrez/hideout",
             symbolName: "apple.terminal"
         ))
         links.addArrangedSubview(makeLinkRow(

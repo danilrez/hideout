@@ -64,8 +64,18 @@ class Util {
     }
 
     static func showPrefWindow() {
-        let prefWindow = PreferencesWindowController.shared.window
-        prefWindow?.bringToFront()
+        guard let prefWindow = PreferencesWindowController.shared.window else { return }
+        prefWindow.bringToFront()
+
+        // Order the window first; AppKit may restore its frame while bringing it
+        // on screen, so centering before this point can be overwritten.
+        guard let screen = prefWindow.screen ?? NSScreen.main else { return }
+        prefWindow.setFrameOrigin(
+            WindowPlacement.centeredOrigin(
+                for: prefWindow.frame,
+                in: screen.visibleFrame
+            )
+        )
     }
 
 }

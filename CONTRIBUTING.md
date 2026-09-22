@@ -18,9 +18,8 @@ unacceptable behavior to the maintainers through the repository or at
 
 ## Development setup
 
-Open `Hideout.xcodeproj` in Xcode 27. The only package dependency is HotKey;
-its exact revision is pinned in
-`Hideout.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved`.
+Open `Hideout.xcodeproj` in Xcode 27. The app has no external Swift Package
+dependencies; global shortcuts use the native Carbon Event Manager API.
 
 The command-line build used for local verification is:
 
@@ -72,23 +71,25 @@ find Hideout -name '*.strings' -print0 | xargs -0 plutil -lint
 ## Release DMG
 
 Releases are created from version tags. Keep `MARKETING_VERSION` in the Xcode
-project aligned with the numeric part of the tag. The current beta release is:
+project aligned with the numeric part of the tag. The current project version
+is `0.1.1` (build `2`), so create the stable release tag with:
 
 ```sh
-git tag v0.1.0-beta
-git push origin v0.1.0-beta
+git tag v0.1.1
+git push origin v0.1.1
 ```
 
 The `Release DMG` workflow builds an unsigned macOS 27 archive on the Xcode 27
 runner, packages `Hideout.app` with an `Applications` shortcut into a DMG, and
-attaches the DMG and its SHA-256 checksum to a GitHub prerelease. The app can
+attaches the DMG and its SHA-256 checksum to the GitHub release. The app can
 be dragged into `/Applications`; because it is unsigned, macOS may require a
 right-click/Open confirmation on first launch.
 
 ## Repository layout
 
 - `Hideout/` — application source, storyboard, resources, and localizations.
-- `Hideout.xcodeproj/` — target settings and the pinned Swift package graph.
+- `Hideout.xcodeproj/` — target settings, build configurations, and the test
+  scheme.
 
 Derived data, build products, Xcode user data, and other generated files do not
 belong in a pull request.
@@ -130,9 +131,9 @@ commit DerivedData or Xcode user state.
 
 ## Code of Conduct
 
-This project follows the [Contributor Covenant, version 2.0][code-of-conduct].
+This project follows the [Contributor Covenant, version 3.0][code-of-conduct].
 Participation is expected to be respectful, constructive, and free from
 harassment. Maintainers may remove or reject contributions that violate these
 standards.
 
-[code-of-conduct]: https://www.contributor-covenant.org/version/2/0/code_of_conduct.html
+[code-of-conduct]: https://www.contributor-covenant.org/version/3/0/code_of_conduct/
