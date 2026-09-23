@@ -14,6 +14,17 @@ the system overflow area until you need them.
 
 - macOS 27.0 or later.
 
+## Installation
+
+Download the latest DMG from the [GitHub Releases](https://github.com/danilrez/Hideout/releases)
+page, open it, and drag `Hideout.app` to `/Applications`.
+
+Release DMGs use an ad-hoc signature to seal the application bundle and its
+resources. They are not signed with an Apple Developer ID certificate or
+notarized, so macOS may require a manual confirmation the first time a
+downloaded build is opened. Verify the SHA-256 checksum published with the
+DMG before installing it.
+
 ## License
 
 MIT &copy; [Danil Reznichenko](https://github.com/danilrez)

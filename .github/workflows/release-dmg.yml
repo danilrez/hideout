@@ -52,6 +52,23 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
+      - name: Seal app with an ad-hoc signature
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          app_path="$RUNNER_TEMP/Hideout.xcarchive/Products/Applications/Hideout.app"
+          test -d "$app_path"
+
+          codesign \
+            --force \
+            --deep \
+            --sign - \
+            --options runtime \
+            --entitlements Hideout/Hideout.entitlements \
+            "$app_path"
+          codesign --verify --deep --strict --verbose=2 "$app_path"
+
       - name: Create DMG
         id: package
         shell: bash

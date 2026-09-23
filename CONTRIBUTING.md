@@ -72,18 +72,18 @@ find Hideout -name '*.strings' -print0 | xargs -0 plutil -lint
 
 Releases are created from version tags. Keep `MARKETING_VERSION` in the Xcode
 project aligned with the numeric part of the tag. The current project version
-is `0.1.1` (build `2`), so create the stable release tag with:
+is `0.1.2` (build `3`), so create the stable release tag with:
 
 ```sh
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
-The `Release DMG` workflow builds an unsigned macOS 27 archive on the Xcode 27
-runner, packages `Hideout.app` with an `Applications` shortcut into a DMG, and
-attaches the DMG and its SHA-256 checksum to the GitHub release. The app can
-be dragged into `/Applications`; because it is unsigned, macOS may require a
-right-click/Open confirmation on first launch.
+The `Release DMG` workflow builds a macOS 27 Release archive, seals
+`Hideout.app` with an ad-hoc signature, verifies it, and publishes the DMG with
+an `Applications` shortcut and SHA-256 checksum. Ad-hoc signing is not
+Developer ID signing or notarization, so macOS may require confirmation on
+first launch.
 
 ## Repository layout
 
