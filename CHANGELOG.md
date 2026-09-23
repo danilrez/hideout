@@ -2,6 +2,13 @@
 
 All notable changes to Hideout are documented here.
 
+## [0.1.2]
+
+### Fixed
+
+- Fixed DMG packaging by sealing the archived app with a valid ad-hoc
+  signature before creating the disk image.
+
 ## [0.1.1]
 
 ### Fixed

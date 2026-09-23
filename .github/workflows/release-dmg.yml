@@ -104,13 +104,18 @@ jobs:
           set -euo pipefail
 
           tag="${GITHUB_REF_NAME}"
+          tag_version="${tag#v}"
+          base_version="${tag_version%%-*}"
+          changelog_anchor="${base_version//./}"
+          changelog_url="https://github.com/${GITHUB_REPOSITORY}/blob/${tag}/CHANGELOG.md#${changelog_anchor}"
+          release_notes="See [CHANGELOG.md#${changelog_anchor}](${changelog_url})."
           release_args=(
             "$tag"
             "${{ steps.package.outputs.dmg }}"
             "${{ steps.package.outputs.checksum }}"
             --verify-tag
             --title "Hideout ${tag}"
-            --generate-notes
+            --notes "$release_notes"
           )
 
           if [[ "$tag" == *-* ]]; then
