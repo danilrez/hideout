@@ -108,7 +108,25 @@ jobs:
           base_version="${tag_version%%-*}"
           changelog_anchor="${base_version//./}"
           changelog_url="https://github.com/${GITHUB_REPOSITORY}/blob/${tag}/CHANGELOG.md#${changelog_anchor}"
-          release_notes="See [CHANGELOG.md#${changelog_anchor}](${changelog_url})."
+          release_notes="$(cat <<EOF
+          The ${tag} DMG uses a sealed ad-hoc signature so macOS does not reject the downloaded app bundle as damaged.
+
+          ## What's new in ${tag_version}
+
+          - The archived app is sealed with an ad-hoc signature before the DMG is created.
+          - The release includes a SHA-256 checksum for the DMG.
+
+          ## Before you install
+
+          - Release builds are not signed with an Apple Developer ID certificate or notarized.
+          - macOS may require confirmation the first time you open a downloaded build.
+          - Open the DMG and drag Hideout.app to /Applications.
+
+          Requires macOS 27 or later.
+
+          Full changelog: [CHANGELOG.md](${changelog_url})
+          EOF
+          )"
           release_args=(
             "$tag"
             "${{ steps.package.outputs.dmg }}"
