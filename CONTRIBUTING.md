@@ -81,7 +81,7 @@ git push origin v0.1.2
 
 The `Release DMG` workflow builds a macOS 27 Release archive, seals
 `Hideout.app` with an ad-hoc signature, verifies it, and publishes the DMG with
-an `Applications` shortcut and SHA-256 checksum. Ad-hoc signing is not
+an `Applications` shortcut. Ad-hoc signing is not
 Developer ID signing or notarization, so macOS may require confirmation on
 first launch.
 

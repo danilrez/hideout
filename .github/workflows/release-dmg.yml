@@ -92,9 +92,7 @@ jobs:
             -format UDZO \
             "$dmg_path"
 
-          shasum -a 256 "$dmg_path" > "$dmg_path.sha256"
           echo "dmg=$dmg_path" >> "$GITHUB_OUTPUT"
-          echo "checksum=$dmg_path.sha256" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub release
         env:
@@ -114,7 +112,6 @@ jobs:
           ## What's new in ${tag_version}
 
           - The archived app is sealed with an ad-hoc signature before the DMG is created.
-          - The release includes a SHA-256 checksum for the DMG.
 
           ## Before you install
 
@@ -130,7 +127,6 @@ jobs:
           release_args=(
             "$tag"
             "${{ steps.package.outputs.dmg }}"
-            "${{ steps.package.outputs.checksum }}"
             --verify-tag
             --title "Hideout ${tag}"
             --notes "$release_notes"
