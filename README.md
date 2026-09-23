@@ -3,12 +3,15 @@
 Hideout keeps your macOS menu bar tidy by moving selected menu bar items into
 the system overflow area until you need them.
 
+## Preview
+
+![Hideout preview](docs/previews/Preview.gif)
+
 ## Features
 
 - Hide and reveal menu bar items with the arrow in the menu bar.
 - Reorder items with `⌘`-drag.
 - Configure a global shortcut, automatic hiding, and login launch.
-- Use the native macOS 27 overflow behavior across multiple displays.
 
 ## Requirements
 
@@ -23,6 +26,18 @@ Release DMGs use an ad-hoc signature to seal the application bundle and its
 resources. They are not signed with an Apple Developer ID certificate or
 notarized, so macOS may require a manual confirmation the first time a
 downloaded build is opened.
+
+## Usage
+
+1. Launch Hideout. Its arrow appears in the menu bar. By default, the
+   preferences window opens at launch.
+2. Hold `⌘` and drag menu bar icons between the visible and hidden sections to
+   choose which items Hideout manages.
+3. Click the arrow to collapse or expand the managed items.
+4. Right-click the arrow to open Settings, toggle automatic collapse, or quit
+   Hideout. `⌥`-click the arrow to show or hide the separator.
+5. In Settings, configure the global shortcut, automatic hiding delay, login
+   launch, and whether the preferences window opens at launch.
 
 ## License
 
