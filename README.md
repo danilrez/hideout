@@ -5,7 +5,9 @@ the system overflow area until you need them.
 
 ## Preview
 
-![Hideout preview](docs/previews/Preview.gif)
+<p align="center">
+  <img src="docs/previews/Preview.gif?v=0.2.0" alt="Hideout usage preview" width="900">
+</p>
 
 ## Features
 
@@ -38,6 +40,10 @@ downloaded build is opened.
    Hideout.
 5. In Settings, configure the global shortcut, automatic hiding delay, login
    launch, and whether the preferences window opens at launch.
+
+<p align="center">
+  <img src="docs/previews/Settings.png?v=0.2.0" alt="Hideout Settings" width="720">
+</p>
 
 ## License
 
