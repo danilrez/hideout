@@ -1,27 +1,16 @@
 # Contributing to Hideout
 
-Hideout is a sandboxed AppKit menu bar utility. The current development target
-is macOS 27.0 or later, built with Xcode 27 and Swift 6 in complete strict
-concurrency mode. The project does not support older macOS deployment targets.
+Hideout is an AppKit menu bar utility for macOS 27 and later. It uses Xcode 27 and Swift 6 with complete strict concurrency. Older macOS versions aren’t supported.
 
-## Before you start
+## Propose a change
 
-For a small fix, open a pull request with a clear description of the problem.
-For a larger behavior or architecture change, open an issue first so the
-direction can be discussed before implementation. Please include screenshots
-or a short reproduction when the change affects the menu bar or preferences
-window.
+For a small fix, open a pull request with a clear description. For a larger behavior or architecture change, open an issue first. Include a screenshot or reproduction when changing the menu bar or Preferences window.
 
-The project follows the [Contributor Covenant][code-of-conduct]. Report
-unacceptable behavior to the maintainers through the repository or at
-`code.cli.agent@gmail.com`.
+## Develop and verify
 
-## Development setup
+Open `Hideout.xcodeproj` in Xcode 27. The project has no external Swift Package dependencies; global shortcuts use the native Carbon Event Manager API.
 
-Open `Hideout.xcodeproj` in Xcode 27. The app has no external Swift Package
-dependencies; global shortcuts use the native Carbon Event Manager API.
-
-The command-line build used for local verification is:
+Build Debug and Release with:
 
 ```sh
 xcodebuild -project Hideout.xcodeproj \
@@ -31,8 +20,6 @@ xcodebuild -project Hideout.xcodeproj \
   CODE_SIGNING_ALLOWED=NO \
   build
 ```
-
-Also validate the Release configuration before submitting a change:
 
 ```sh
 xcodebuild -project Hideout.xcodeproj \
@@ -43,10 +30,7 @@ xcodebuild -project Hideout.xcodeproj \
   build
 ```
 
-Do not override `MACOSX_DEPLOYMENT_TARGET` or `SWIFT_VERSION` when verifying a
-change. They are part of the project contract: macOS 27.0 and Swift 6.0.
-
-The project has one XCTest target, `HideoutTests`. Run the full suite with:
+Keep `MACOSX_DEPLOYMENT_TARGET` at 27.0 and `SWIFT_VERSION` at 6.0 when verifying changes. All `HideoutTests` must pass before submitting:
 
 ```sh
 xcodebuild test -project Hideout.xcodeproj \
@@ -57,12 +41,7 @@ xcodebuild test -project Hideout.xcodeproj \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-A successful test run is required, and behavioral changes must also be checked
-against the real menu bar. For UI or interaction changes, manually verify
-collapse/expand, auto-hide, the global shortcut, login item registration, and a
-multi-display setup on macOS 27. If the change touches hover-to-expand or
-status-item ordering, verify those paths as well. Check localized resources
-with:
+Behavior changes also need a check in the real menu bar. For UI changes, verify collapse and expand, auto-hide, the global shortcut, login-item registration, and multiple displays on macOS 27. If a change affects hover-to-expand or status-item order, check those paths too. Lint localized strings with:
 
 ```sh
 find Hideout -name '*.strings' -print0 | xargs -0 plutil -lint
@@ -70,70 +49,27 @@ find Hideout -name '*.strings' -print0 | xargs -0 plutil -lint
 
 ## Release DMG
 
-Releases are created from version tags. Keep `MARKETING_VERSION` in the Xcode
-project aligned with the numeric part of the tag. The current project version
-is `0.1.2` (build `3`), so create the stable release tag with:
+Use semantic version tags in the form `vMAJOR.MINOR.PATCH`. Match `MARKETING_VERSION` to the tag and increment `CURRENT_PROJECT_VERSION` for each build. Create and push the matching tag when preparing a release.
 
-```sh
-git tag v0.1.2
-git push origin v0.1.2
-```
+The `Release DMG` workflow builds a macOS 27 archive, seals and verifies `Hideout.app` with an ad-hoc signature, then publishes the DMG with an `Applications` shortcut. Ad-hoc signing isn’t Developer ID signing or notarization; macOS may ask users to confirm the first launch.
 
-The `Release DMG` workflow builds a macOS 27 Release archive, seals
-`Hideout.app` with an ad-hoc signature, verifies it, and publishes the DMG with
-an `Applications` shortcut. Ad-hoc signing is not
-Developer ID signing or notarization, so macOS may require confirmation on
-first launch.
+## Code guidelines
 
-## Repository layout
-
-- `Hideout/` — application source, storyboard, resources, and localizations.
-- `Hideout.xcodeproj/` — target settings, build configurations, and the test
-  scheme.
-
-Derived data, build products, Xcode user data, and other generated files do not
-belong in a pull request.
-
-## Coding guidelines
-
-- Keep AppKit state and UI work on `@MainActor`; resolve Swift 6 isolation
-  errors instead of masking them with `@unchecked Sendable`.
-- Use the macOS 27 APIs and behavior already established in the source. Keep
-  the deployment target and Swift language mode aligned with the Xcode project.
-- Preserve the existing `hiddenbar_*_v27` status-item autosave names and their
-  declaration order. The `_v27` suffix intentionally isolates the macOS 27
-  layout from older versions, so an existing installation may need a one-time
-  `⌘`-drag after upgrading. Do not rename or reorder these items without
-  rechecking menu bar placement.
-- Keep the app sandboxed and avoid adding entitlements, network access,
-  subprocesses, or dependencies without an explicit design decision.
-- Put user-visible strings in the localization resources and update the
-  storyboard companion strings when changing storyboard text.
-- Prefer focused changes that match the existing AppKit architecture. Do not
-  reformat unrelated files or edit generated artifacts.
+- Keep AppKit state and UI work on `@MainActor`. Fix Swift 6 isolation errors; don’t mask them with `@unchecked Sendable`.
+- Use the macOS 27 APIs and behavior already established in the project.
+- Preserve the `hiddenbar_*_v27` status-item autosave names and declaration order. They keep macOS 27 menu bar placement separate from older layouts. An existing installation may need a one-time `⌘`-drag after upgrading. Recheck placement before renaming or reordering these items.
+- The Release DMG workflow signs with `Hideout/Hideout.entitlements`; local verification builds disable signing. Discuss changes to entitlements, network access, subprocesses, or dependencies before making them.
+- Put user-facing strings in localization resources. Update storyboard companion strings when changing storyboard text.
+- Keep changes focused; don’t reformat unrelated files or edit generated artifacts.
 
 ## Branches and pull requests
 
-Branches are created from `main` and should use a short descriptive prefix,
-for example `feature/hover-to-expand`, `fix/login-item-state`, or
-`maintenance/contributing-guide`.
+Create branches from `main` with a short descriptive prefix, such as `feature/hover-to-expand`, `fix/login-item-state`, or `maintenance/contributing-guide`.
 
-A pull request should state:
-
-1. What user-visible or maintenance problem it solves.
-2. Which behavior or files changed.
-3. What was verified, including the exact build command and any manual menu bar
-   checks.
-4. Any known limitation or migration step for existing installations.
-
-Keep commits focused, do not include secrets or local configuration, and do not
-commit DerivedData or Xcode user state.
+Describe the problem and the change in each pull request. Include build commands and manual checks, plus any known limitation or migration step. Keep commits focused. Don’t commit secrets, local configuration, DerivedData, or Xcode user state.
 
 ## Code of Conduct
 
-This project follows the [Contributor Covenant, version 3.0][code-of-conduct].
-Participation is expected to be respectful, constructive, and free from
-harassment. Maintainers may remove or reject contributions that violate these
-standards.
+Hideout follows the [Contributor Covenant, version 3.0][code-of-conduct]. Keep participation respectful and constructive. Report unacceptable behavior through the repository or to `code.cli.agent@gmail.com`.
 
 [code-of-conduct]: https://www.contributor-covenant.org/version/3/0/code_of_conduct/

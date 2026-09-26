@@ -11,11 +11,11 @@ struct Assets {
     }
 
     static var expandImage: NSImage? {
-        systemSymbol(named: "chevron.backward")
+        systemSymbol(named: "chevron.backward.2")
     }
 
     static var collapseImage: NSImage? {
-        systemSymbol(named: "chevron.forward")
+        systemSymbol(named: "chevron.forward.2")
     }
 
     static var separatorImage: NSImage? {

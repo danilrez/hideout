@@ -31,11 +31,11 @@ downloaded build is opened.
 
 1. Launch Hideout. Its arrow appears in the menu bar. By default, the
    preferences window opens at launch.
-2. Hold `⌘` and drag menu bar icons between the visible and hidden sections to
-   choose which items Hideout manages.
+2. Hold `⌘` and drag menu bar icons past the `>>` control to choose which items
+   Hideout manages.
 3. Click the arrow to collapse or expand the managed items.
 4. Right-click the arrow to open Settings, toggle automatic collapse, or quit
-   Hideout. `⌥`-click the arrow to show or hide the separator.
+   Hideout.
 5. In Settings, configure the global shortcut, automatic hiding delay, login
    launch, and whether the preferences window opens at launch.
 

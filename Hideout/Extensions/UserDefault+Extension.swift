@@ -7,7 +7,6 @@ extension UserDefaults {
         static let isAutoStart = "isAutoStart"
         static let isAutoHide = "isAutoHide"
         static let isShowPreference = "isShowPreferences"
-        static let areSeparatorsHidden = "areSeparatorsHidden"
         static let useFullStatusBarOnExpandEnabled = "useFullStatusBarOnExpandEnabled"
         static let hoverToExpand = "hoverToExpand"
     }

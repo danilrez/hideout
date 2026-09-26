@@ -78,4 +78,19 @@ class Util {
         )
     }
 
+    static func showAboutWindow() {
+        let controller = AboutWindowController.shared
+        controller.showWindow(nil)
+        guard let aboutWindow = controller.window else { return }
+
+        aboutWindow.bringToFront()
+        guard let screen = aboutWindow.screen ?? NSScreen.main else { return }
+        aboutWindow.setFrameOrigin(
+            WindowPlacement.centeredOrigin(
+                for: aboutWindow.frame,
+                in: screen.visibleFrame
+            )
+        )
+    }
+
 }

@@ -1,133 +1,112 @@
-import Cocoa
+import AppKit
 
 @MainActor
 class AboutViewController: NSViewController {
 
-    private let imageViewTop = NSImageView()
-    private let lblVersion = NSTextField(labelWithString: "")
-    
-    static func initWithStoryboard() -> AboutViewController {
-        let vc = NSStoryboard(name:"Main", bundle: nil).instantiateController(withIdentifier: "aboutVC") as! AboutViewController
-        return vc
+    override func loadView() {
+        let surface = NSVisualEffectView(frame: .zero)
+        surface.material = .sidebar
+        surface.blendingMode = .behindWindow
+        surface.state = .active
+        view = surface
     }
-    
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
     }
-    
+
     private func setupUI() {
         NSLayoutConstraint.deactivate(view.constraints)
         view.subviews.forEach { $0.removeFromSuperview() }
 
-        imageViewTop.image = Assets.appIcon
-        imageViewTop.imageScaling = .scaleProportionallyDown
-        imageViewTop.translatesAutoresizingMaskIntoConstraints = false
-
-        lblVersion.font = NSFont.systemFont(ofSize: 13)
-        lblVersion.textColor = .secondaryLabelColor
-        lblVersion.alignment = .center
-        lblVersion.translatesAutoresizingMaskIntoConstraints = false
-
-        if let version = Bundle.main.releaseVersionNumber {
-            lblVersion.stringValue = "Version \(version) (beta)"
-        }
-
-        let hero = NSStackView()
-        hero.orientation = .horizontal
-        hero.alignment = .centerY
-        hero.spacing = 22
-        hero.translatesAutoresizingMaskIntoConstraints = false
-
-        let heroText = NSStackView()
-        heroText.orientation = .vertical
-        heroText.alignment = .leading
-        heroText.spacing = 5
-        heroText.translatesAutoresizingMaskIntoConstraints = false
+        let icon = NSImageView(image: Assets.appIcon ?? NSApp.applicationIconImage ?? NSImage())
+        icon.imageScaling = .scaleProportionallyDown
+        icon.setAccessibilityLabel("Hideout")
+        icon.translatesAutoresizingMaskIntoConstraints = false
 
         let title = NSTextField(labelWithString: "Hideout")
-        title.font = NSFont.systemFont(ofSize: 28, weight: .semibold)
+        title.font = NSFont.systemFont(ofSize: 14, weight: .bold)
         title.textColor = .labelColor
 
         let subtitle = NSTextField(labelWithString: "A quiet place for your menu bar")
-        subtitle.font = NSFont.systemFont(ofSize: 15)
+        subtitle.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         subtitle.textColor = .secondaryLabelColor
 
-        heroText.addArrangedSubview(title)
-        heroText.addArrangedSubview(subtitle)
-        heroText.addArrangedSubview(lblVersion)
-        hero.addArrangedSubview(imageViewTop)
-        hero.addArrangedSubview(heroText)
+        let version = Bundle.main.releaseVersionNumber.map {
+            "Version \($0) (beta)"
+        } ?? "Beta"
+        let versionLabel = NSTextField(labelWithString: version)
+        versionLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        versionLabel.textColor = .labelColor
 
-        let links = NSStackView()
-        links.orientation = .vertical
-        links.alignment = .leading
-        links.spacing = 10
-        links.translatesAutoresizingMaskIntoConstraints = false
-        links.addArrangedSubview(makeLinkRow(
-            title: "GitHub",
-            href: "https://github.com/danilrez/hideout",
-            symbolName: "apple.terminal"
-        ))
-        links.addArrangedSubview(makeLinkRow(
-            title: "Email us",
-            href: "mailto:code.cli.agent@gmail.com",
-            symbolName: "envelope.fill"
-        ))
+        let copyright = NSTextField(labelWithString: "© 2025 Danil Reznichenko")
+        copyright.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        copyright.textColor = .secondaryLabelColor
 
-        let copyright = NSTextField(labelWithString: "MIT © Danil Reznichenko")
-        copyright.font = NSFont.systemFont(ofSize: 11)
-        copyright.textColor = .tertiaryLabelColor
-        copyright.alignment = .center
+        let license = NSTextField(labelWithString: "MIT License")
+        license.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        license.textColor = .secondaryLabelColor
 
-        let contentStack = NSStackView(views: [hero, links, copyright])
+        let contentStack = NSStackView(views: [
+            icon,
+            title,
+            subtitle,
+            versionLabel,
+            copyright,
+            license
+        ])
         contentStack.orientation = .vertical
         contentStack.alignment = .centerX
-        contentStack.spacing = 22
+        contentStack.spacing = 4
         contentStack.translatesAutoresizingMaskIntoConstraints = false
+        contentStack.setCustomSpacing(12, after: icon)
+        contentStack.setCustomSpacing(10, after: title)
+        contentStack.setCustomSpacing(14, after: versionLabel)
+        contentStack.setCustomSpacing(2, after: copyright)
         view.addSubview(contentStack)
 
         NSLayoutConstraint.activate([
-            imageViewTop.widthAnchor.constraint(equalToConstant: 92),
-            imageViewTop.heightAnchor.constraint(equalToConstant: 92),
+            icon.widthAnchor.constraint(equalToConstant: 64),
+            icon.heightAnchor.constraint(equalToConstant: 64),
             contentStack.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            contentStack.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor),
-            contentStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.leadingAnchor, constant: 40),
-            contentStack.trailingAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -40),
-            contentStack.topAnchor.constraint(greaterThanOrEqualTo: view.safeAreaLayoutGuide.topAnchor, constant: 36),
-            contentStack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -36)
+            contentStack.leadingAnchor.constraint(greaterThanOrEqualTo: view.leadingAnchor, constant: 20),
+            contentStack.trailingAnchor.constraint(lessThanOrEqualTo: view.trailingAnchor, constant: -20),
+            contentStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
+            contentStack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
     }
+}
 
-    private func makeLinkRow(title: String, href: String, symbolName: String) -> NSView {
-        let row = NSStackView()
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 10
+@MainActor
+final class AboutWindowController: NSWindowController {
+    static let shared = AboutWindowController()
+    private static let contentSize = NSSize(width: 284, height: 252)
 
-        let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: title) ?? NSImage()
-        let imageView = NSImageView(image: image)
-        imageView.imageScaling = .scaleProportionallyDown
-        imageView.contentTintColor = .secondaryLabelColor
-        imageView.translatesAutoresizingMaskIntoConstraints = false
-        imageView.widthAnchor.constraint(equalToConstant: 18).isActive = true
-        imageView.heightAnchor.constraint(equalToConstant: 18).isActive = true
+    private init() {
+        let window = NSWindow(
+            contentRect: NSRect(origin: .zero, size: Self.contentSize),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        super.init(window: window)
 
-        let link = HyperlinkTextField(frame: .zero)
-        link.stringValue = title
-        link.href = href
-        link.isBezeled = false
-        link.drawsBackground = false
-        link.isEditable = false
-        link.isSelectable = false
-        link.focusRingType = .none
-        link.font = NSFont.systemFont(ofSize: 13)
-        link.textColor = .linkColor
-
-        row.addArrangedSubview(imageView)
-        row.addArrangedSubview(link)
-        return row
+        window.styleMask.insert(.fullSizeContentView)
+        window.isOpaque = false
+        window.backgroundColor = .clear
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.titleVisibility = .hidden
+        window.title = "About Hideout"
+        window.toolbar = nil
+        window.contentMinSize = Self.contentSize
+        window.contentViewController = AboutViewController()
+        window.setContentSize(Self.contentSize)
+        window.center()
     }
 
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
 }

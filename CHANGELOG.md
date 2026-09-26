@@ -2,12 +2,17 @@
 
 All notable changes to Hideout are documented here.
 
+## [0.2.0]
+
+- Updated the menu bar control for macOS 27 with a double-chevron and kept the full context menu visible near screen edges.
+- Consolidated Preferences into one Settings view with a menu bar preview, Behavior options, and keyboard shortcuts.
+- Added an About Hideout window and a menu item to open it.
+
 ## [0.1.2]
 
 ### Fixed
 
-- Fixed DMG packaging by sealing the archived app with a valid ad-hoc
-  signature before creating the disk image.
+- Fixed DMG packaging by sealing the archived app with a valid ad-hoc signature before creating the disk image.
 
 ## [0.1.1]
 
@@ -21,8 +26,7 @@ All notable changes to Hideout are documented here.
 
 - Removed the third-party `HotKey` Swift package dependency.
 - Replaced shortcut handling with the native Carbon Event Manager API.
-- Kept the app on native Swift 6 and AppKit APIs with no external Swift
-  package dependencies.
+- Kept the app on native Swift 6 and AppKit APIs with no external Swift package dependencies.
 
 ## [0.1.0]
 
@@ -33,5 +37,4 @@ All notable changes to Hideout are documented here.
 - `⌘`-drag reordering for menu bar items.
 - Global shortcut, automatic hiding, login launch, and multi-display support.
 - Preferences, localization resources, and XCTest coverage for core behavior.
-- An unsigned DMG release workflow with a SHA-256 checksum for GitHub
-  Releases.
+- An unsigned DMG release workflow with a SHA-256 checksum for GitHub Releases.

@@ -15,11 +15,19 @@ class AppDelegate: NSObject, NSApplicationDelegate{
     }()
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        detectLTRLang()
         setupAutoStartApp()
         registerDefaultValues()
         setupGlobalShortcut()
         openPreferencesIfNeeded()
-        detectLTRLang()
+    }
+
+    @IBAction func showAboutWindow(_ sender: Any?) {
+        Util.showAboutWindow()
+    }
+
+    @IBAction func showPreferencesWindow(_ sender: Any?) {
+        Util.showPrefWindow()
     }
     
     func openPreferencesIfNeeded() {
@@ -37,8 +45,7 @@ class AppDelegate: NSObject, NSApplicationDelegate{
             UserDefaults.Key.isAutoStart: false,
             UserDefaults.Key.isShowPreference: true,
             UserDefaults.Key.isAutoHide: true,
-            UserDefaults.Key.numberOfSecondForAutoHide: 10.0,
-            UserDefaults.Key.areSeparatorsHidden: false
+            UserDefaults.Key.numberOfSecondForAutoHide: 10.0
          ])
     }
     
@@ -55,6 +62,7 @@ class AppDelegate: NSObject, NSApplicationDelegate{
         // so some behavier of the app needs to be changed in these cases
         
         Constant.isUsingLTRLanguage = (NSApplication.shared.userInterfaceLayoutDirection == .leftToRight)
+        statusBarController.updateGlyphPositionConstraint()
     }
    
 }

@@ -67,16 +67,6 @@ enum Preferences {
         }
     }
     
-    static var areSeparatorsHidden: Bool {
-        get {
-            UserDefaults.standard.bool(forKey: UserDefaults.Key.areSeparatorsHidden)
-        }
-        
-        set {
-            UserDefaults.standard.set(newValue, forKey: UserDefaults.Key.areSeparatorsHidden)
-        }
-    }
-    
     static var hoverToExpand: Bool {
         get {
             UserDefaults.standard.bool(forKey: UserDefaults.Key.hoverToExpand)

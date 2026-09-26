@@ -5,40 +5,29 @@ import XCTest
 final class ExpandCollapseActionTests: XCTestCase {
     func testMissingEventTogglesTheBar() {
         XCTAssertEqual(
-            ExpandCollapseActionResolver.action(eventType: nil, optionPressed: false),
+            ExpandCollapseActionResolver.action(eventType: nil),
             .toggle
         )
     }
 
     func testLeftClickTogglesTheBar() {
         XCTAssertEqual(
-            ExpandCollapseActionResolver.action(eventType: .leftMouseUp, optionPressed: false),
+            ExpandCollapseActionResolver.action(eventType: .leftMouseUp),
             .toggle
         )
     }
 
     func testRightClickOpensTheContextMenu() {
         XCTAssertEqual(
-            ExpandCollapseActionResolver.action(eventType: .rightMouseUp, optionPressed: false),
+            ExpandCollapseActionResolver.action(eventType: .rightMouseUp),
             .contextMenu
         )
     }
 
-    func testOptionClickTogglesSeparators() {
+    func testOtherMouseEventsToggleTheBar() {
         XCTAssertEqual(
-            ExpandCollapseActionResolver.action(eventType: .leftMouseUp, optionPressed: true),
-            .toggleSeparators
-        )
-        XCTAssertEqual(
-            ExpandCollapseActionResolver.action(eventType: .rightMouseUp, optionPressed: true),
-            .toggleSeparators
-        )
-    }
-
-    func testOtherMouseEventsToggleSeparators() {
-        XCTAssertEqual(
-            ExpandCollapseActionResolver.action(eventType: .otherMouseUp, optionPressed: false),
-            .toggleSeparators
+            ExpandCollapseActionResolver.action(eventType: .otherMouseUp),
+            .toggle
         )
     }
 }

@@ -5,7 +5,7 @@ class PreferencesViewController: NSViewController {
     // MARK: - Controls
     // The storyboard only provides the view-controller shell. The controls and
     // their actions belong here so the layout has a single source of truth.
-    private let textFieldTitle = NSTextField(labelWithString: "")
+    private let tutorialTitleLabel = NSTextField(labelWithString: "")
     private let statusBarStackView = NSStackView()
     private let arrowPointToHiddenImage = NSImageView()
 
@@ -21,7 +21,7 @@ class PreferencesViewController: NSViewController {
     private var tutorialStateLabelConstraints: [NSLayoutConstraint] = []
     private var tutorialHiddenLabel: NSTextField?
     private var tutorialShownLabel: NSTextField?
-    private let settingsColumnInset: CGFloat = 22
+    private let settingsColumnInset: CGFloat = 16
     
     public var listening = false {
         didSet {
@@ -68,32 +68,41 @@ class PreferencesViewController: NSViewController {
         rootStack.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(rootStack)
         NSLayoutConstraint.activate([
-            rootStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 28),
-            rootStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -28),
-            rootStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 16),
-            rootStack.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -28)
+            rootStack.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+            rootStack.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+            rootStack.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 20),
+            rootStack.bottomAnchor.constraint(lessThanOrEqualTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
         ])
-
-        let tutorialContainer = NSView()
-        tutorialContainer.translatesAutoresizingMaskIntoConstraints = false
-        tutorialContainer.heightAnchor.constraint(equalToConstant: 160).isActive = true
 
         let tutorialContent = NSView()
         tutorialContent.translatesAutoresizingMaskIntoConstraints = false
-        tutorialContainer.addSubview(tutorialContent)
-        NSLayoutConstraint.activate([
-            tutorialContent.centerXAnchor.constraint(equalTo: tutorialContainer.centerXAnchor),
-            tutorialContent.widthAnchor.constraint(equalTo: tutorialContainer.widthAnchor, multiplier: 0.72),
-            tutorialContent.topAnchor.constraint(equalTo: tutorialContainer.topAnchor),
-            tutorialContent.bottomAnchor.constraint(equalTo: tutorialContainer.bottomAnchor)
-        ])
-        rootStack.addArrangedSubview(tutorialContainer)
-        tutorialContainer.widthAnchor.constraint(equalTo: rootStack.widthAnchor).isActive = true
-        setupTutorialCard(tutorialContent)
+        tutorialContent.heightAnchor.constraint(equalToConstant: 148).isActive = true
+        rootStack.addArrangedSubview(tutorialContent)
+        tutorialContent.widthAnchor.constraint(equalTo: rootStack.widthAnchor).isActive = true
+        setupTutorialContent(tutorialContent)
 
-        let settingsCard = makeUnifiedSettingsCard()
-        settingsCard.heightAnchor.constraint(equalToConstant: 176).isActive = true
-        rootStack.addArrangedSubview(settingsCard)
+        let tutorialSeparator = NSBox()
+        tutorialSeparator.boxType = .separator
+        tutorialSeparator.translatesAutoresizingMaskIntoConstraints = false
+        rootStack.addArrangedSubview(tutorialSeparator)
+        NSLayoutConstraint.activate([
+            tutorialSeparator.leadingAnchor.constraint(equalTo: rootStack.leadingAnchor, constant: settingsColumnInset),
+            tutorialSeparator.trailingAnchor.constraint(equalTo: rootStack.trailingAnchor, constant: -settingsColumnInset),
+            tutorialSeparator.heightAnchor.constraint(equalToConstant: 1)
+        ])
+        rootStack.setCustomSpacing(12, after: tutorialContent)
+        rootStack.setCustomSpacing(4, after: tutorialSeparator)
+
+        let settingsContent = makeSettingsContent()
+        settingsContent.heightAnchor.constraint(equalToConstant: 168).isActive = true
+        rootStack.addArrangedSubview(settingsContent)
+        settingsContent.widthAnchor.constraint(equalTo: rootStack.widthAnchor).isActive = true
+
+        let footer = makeSettingsFooter()
+        footer.heightAnchor.constraint(equalToConstant: 26).isActive = true
+        rootStack.addArrangedSubview(footer)
+        footer.widthAnchor.constraint(equalTo: rootStack.widthAnchor).isActive = true
+        rootStack.setCustomSpacing(12, after: settingsContent)
     }
 
     private func configureControls() {
@@ -161,8 +170,7 @@ class PreferencesViewController: NSViewController {
         btnShortcut.target = self
         btnShortcut.action = #selector(register(_:))
         btnShortcut.controlSize = .regular
-        btnShortcut.bezelStyle = .glass
-        btnShortcut.borderShape = .roundedRectangle
+        btnShortcut.bezelStyle = .push
 
         btnClear.translatesAutoresizingMaskIntoConstraints = false
         btnClear.title = "⌫"
@@ -170,8 +178,7 @@ class PreferencesViewController: NSViewController {
         btnClear.action = #selector(unregister(_:))
         btnClear.isEnabled = false
         btnClear.controlSize = .regular
-        btnClear.bezelStyle = .glass
-        btnClear.borderShape = .roundedRectangle
+        btnClear.bezelStyle = .push
         btnClear.widthAnchor.constraint(equalToConstant: 36).isActive = true
     }
 
@@ -183,18 +190,27 @@ class PreferencesViewController: NSViewController {
         )
     }
 
-    private func setupTutorialCard(_ contentView: NSView) {
-        textFieldTitle.stringValue = localizedMainString(
-            "k7C-e5-6a0",
-            fallback: "In your Mac's menu bar, hold ⌘ and drag icons\nbetween sections to configure Hideout."
+    private func setupTutorialContent(_ contentView: NSView) {
+        tutorialTitleLabel.stringValue = "How to use"
+        tutorialTitleLabel.translatesAutoresizingMaskIntoConstraints = false
+        tutorialTitleLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
+        tutorialTitleLabel.textColor = .labelColor
+
+        let instructionLabel = NSTextField(
+            labelWithString: "Hold ⌘ and drag icons between the Hidden and Shown sections."
         )
-        textFieldTitle.translatesAutoresizingMaskIntoConstraints = false
-        textFieldTitle.alignment = .center
-        textFieldTitle.font = NSFont.systemFont(ofSize: 14, weight: .medium)
-        textFieldTitle.textColor = .secondaryLabelColor
-        textFieldTitle.maximumNumberOfLines = 2
-        textFieldTitle.cell?.wraps = true
-        textFieldTitle.cell?.lineBreakMode = .byWordWrapping
+        instructionLabel.translatesAutoresizingMaskIntoConstraints = false
+        instructionLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+        instructionLabel.textColor = .secondaryLabelColor
+
+        let previewSurface = NSVisualEffectView()
+        previewSurface.material = .underWindowBackground
+        previewSurface.blendingMode = .withinWindow
+        previewSurface.state = .active
+        previewSurface.wantsLayer = true
+        previewSurface.layer?.cornerRadius = 6
+        previewSurface.layer?.masksToBounds = true
+        previewSurface.translatesAutoresizingMaskIntoConstraints = false
 
         statusBarStackView.translatesAutoresizingMaskIntoConstraints = false
         statusBarStackView.alignment = .centerY
@@ -214,42 +230,54 @@ class PreferencesViewController: NSViewController {
         let shownLabel = makeBodyLabel(
             localizedMainString("iyS-g5-5mk", fallback: "Shown")
         )
+        hiddenLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        shownLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         hiddenLabel.translatesAutoresizingMaskIntoConstraints = false
         shownLabel.translatesAutoresizingMaskIntoConstraints = false
         tutorialHiddenLabel = hiddenLabel
         tutorialShownLabel = shownLabel
 
-        contentView.addSubview(textFieldTitle)
-        contentView.addSubview(statusBarStackView)
+        contentView.addSubview(tutorialTitleLabel)
+        contentView.addSubview(instructionLabel)
+        contentView.addSubview(previewSurface)
+        previewSurface.addSubview(statusBarStackView)
         contentView.addSubview(arrowPointToHiddenImage)
         contentView.addSubview(hiddenLabel)
         contentView.addSubview(shownLabel)
 
         NSLayoutConstraint.activate([
-            textFieldTitle.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 18),
-            textFieldTitle.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 28),
-            textFieldTitle.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -28),
-            textFieldTitle.heightAnchor.constraint(equalToConstant: 38),
+            tutorialTitleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            tutorialTitleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: settingsColumnInset),
+            tutorialTitleLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -settingsColumnInset),
 
-            statusBarStackView.topAnchor.constraint(equalTo: textFieldTitle.bottomAnchor, constant: 14),
-            statusBarStackView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 24),
-            statusBarStackView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -24),
-            statusBarStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            statusBarStackView.heightAnchor.constraint(equalToConstant: 22),
+            instructionLabel.topAnchor.constraint(equalTo: tutorialTitleLabel.bottomAnchor, constant: 4),
+            instructionLabel.leadingAnchor.constraint(equalTo: tutorialTitleLabel.leadingAnchor),
+            instructionLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -settingsColumnInset),
 
-            arrowPointToHiddenImage.topAnchor.constraint(equalTo: statusBarStackView.bottomAnchor, constant: 7),
-            arrowPointToHiddenImage.widthAnchor.constraint(equalToConstant: 20),
-            arrowPointToHiddenImage.heightAnchor.constraint(equalToConstant: 20),
+            previewSurface.topAnchor.constraint(equalTo: instructionLabel.bottomAnchor, constant: 12),
+            previewSurface.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: settingsColumnInset),
+            previewSurface.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -settingsColumnInset),
+            previewSurface.heightAnchor.constraint(equalToConstant: 36),
+
+            statusBarStackView.leadingAnchor.constraint(greaterThanOrEqualTo: previewSurface.leadingAnchor, constant: 12),
+            statusBarStackView.trailingAnchor.constraint(lessThanOrEqualTo: previewSurface.trailingAnchor, constant: -12),
+            statusBarStackView.centerXAnchor.constraint(equalTo: previewSurface.centerXAnchor),
+            statusBarStackView.centerYAnchor.constraint(equalTo: previewSurface.centerYAnchor),
+            statusBarStackView.heightAnchor.constraint(equalToConstant: 24),
+
+            arrowPointToHiddenImage.topAnchor.constraint(equalTo: previewSurface.bottomAnchor, constant: 6),
+            arrowPointToHiddenImage.widthAnchor.constraint(equalToConstant: 16),
+            arrowPointToHiddenImage.heightAnchor.constraint(equalToConstant: 16),
             hiddenLabel.topAnchor.constraint(equalTo: arrowPointToHiddenImage.bottomAnchor, constant: 2),
-            hiddenLabel.heightAnchor.constraint(equalToConstant: 24),
+            hiddenLabel.heightAnchor.constraint(equalToConstant: 16),
             hiddenLabel.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor),
             hiddenLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor),
             shownLabel.topAnchor.constraint(equalTo: hiddenLabel.topAnchor),
             shownLabel.heightAnchor.constraint(equalTo: hiddenLabel.heightAnchor),
             shownLabel.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor),
             shownLabel.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor),
-            hiddenLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12),
-            shownLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -12)
+            hiddenLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10),
+            shownLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -10)
         ])
     }
 
@@ -258,7 +286,7 @@ class PreferencesViewController: NSViewController {
         let section = NSStackView()
         section.orientation = .vertical
         section.alignment = .leading
-        section.spacing = 11
+        section.spacing = 10
         section.translatesAutoresizingMaskIntoConstraints = false
         contentView.addSubview(section)
 
@@ -278,8 +306,8 @@ class PreferencesViewController: NSViewController {
         NSLayoutConstraint.activate([
             section.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: settingsColumnInset),
             section.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -settingsColumnInset),
-            section.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            section.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -20),
+            section.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            section.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -16),
             autoHideRow.leadingAnchor.constraint(equalTo: section.leadingAnchor),
             autoHideRow.trailingAnchor.constraint(equalTo: section.trailingAnchor)
         ])
@@ -298,7 +326,10 @@ class PreferencesViewController: NSViewController {
         section.addArrangedSubview(makeSectionHeader(
             localizedMainString("HJP-Lf-rxm", fallback: "Keyboard shortcut")
         ))
-        section.addArrangedSubview(makeBodyLabel("Use a shortcut to show or hide the menu bar."))
+        let shortcutDescription = makeBodyLabel("Use a shortcut to show or hide the menu bar.")
+        shortcutDescription.alignment = .left
+        section.addArrangedSubview(shortcutDescription)
+        shortcutDescription.widthAnchor.constraint(equalTo: section.widthAnchor).isActive = true
 
         let shortcutRow = NSStackView(views: [btnShortcut, btnClear])
         shortcutRow.orientation = .horizontal
@@ -311,57 +342,117 @@ class PreferencesViewController: NSViewController {
         NSLayoutConstraint.activate([
             section.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: settingsColumnInset),
             section.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -settingsColumnInset),
-            section.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 20),
-            section.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -20)
+            section.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 16),
+            section.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor, constant: -16)
         ])
         return contentView
     }
 
-    private func makeUnifiedSettingsCard() -> NSView {
-        let container = AdaptiveSettingsCardView()
+    private func makeSettingsContent() -> NSView {
+        let container = NSView()
         container.translatesAutoresizingMaskIntoConstraints = false
-
-        let columns = NSView()
-        columns.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(columns)
 
         let behaviorContent = makeBehaviorContent()
         behaviorContent.translatesAutoresizingMaskIntoConstraints = false
-        columns.addSubview(behaviorContent)
 
         let shortcutContent = makeShortcutContent()
         shortcutContent.translatesAutoresizingMaskIntoConstraints = false
-        columns.addSubview(shortcutContent)
 
-        let divider = AdaptiveSeparatorView()
-        divider.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(divider)
+        let columnSplit = NSLayoutGuide()
+        container.addLayoutGuide(columnSplit)
+
+        let separator = NSBox()
+        separator.boxType = .separator
+        separator.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(behaviorContent)
+        container.addSubview(shortcutContent)
+        container.addSubview(separator)
 
         NSLayoutConstraint.activate([
-            columns.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            columns.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            columns.topAnchor.constraint(equalTo: container.topAnchor),
-            columns.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            behaviorContent.leadingAnchor.constraint(equalTo: columns.leadingAnchor),
-            behaviorContent.trailingAnchor.constraint(equalTo: columns.centerXAnchor),
-            behaviorContent.topAnchor.constraint(equalTo: columns.topAnchor),
-            behaviorContent.bottomAnchor.constraint(equalTo: columns.bottomAnchor),
-            shortcutContent.leadingAnchor.constraint(equalTo: columns.centerXAnchor),
-            shortcutContent.trailingAnchor.constraint(equalTo: columns.trailingAnchor),
-            shortcutContent.topAnchor.constraint(equalTo: columns.topAnchor),
-            shortcutContent.bottomAnchor.constraint(equalTo: columns.bottomAnchor),
-            divider.centerXAnchor.constraint(equalTo: container.centerXAnchor),
-            divider.topAnchor.constraint(equalTo: container.topAnchor, constant: 22),
-            divider.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -22),
-            divider.widthAnchor.constraint(equalToConstant: 1)
+            columnSplit.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            columnSplit.widthAnchor.constraint(equalTo: container.widthAnchor, multiplier: 0.485),
+
+            separator.centerXAnchor.constraint(equalTo: columnSplit.trailingAnchor),
+            separator.topAnchor.constraint(equalTo: container.topAnchor, constant: 16),
+            separator.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -16),
+            separator.widthAnchor.constraint(equalToConstant: 1),
+
+            behaviorContent.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            behaviorContent.trailingAnchor.constraint(equalTo: separator.leadingAnchor),
+            behaviorContent.topAnchor.constraint(equalTo: container.topAnchor),
+            behaviorContent.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+
+            shortcutContent.leadingAnchor.constraint(equalTo: separator.trailingAnchor),
+            shortcutContent.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            shortcutContent.topAnchor.constraint(equalTo: container.topAnchor),
+            shortcutContent.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
 
         return container
     }
 
+    private func makeSettingsFooter() -> NSView {
+        let footer = NSView()
+        footer.translatesAutoresizingMaskIntoConstraints = false
+
+        let helpPrompt = NSTextField(labelWithString: "Need help or want to contribute?")
+        helpPrompt.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        helpPrompt.textColor = .secondaryLabelColor
+
+        let links = NSStackView(views: [
+            makeFooterLink(
+                title: "GitHub",
+                href: "https://github.com/danilrez/hideout"
+            ),
+            makeFooterLink(
+                title: "Email us",
+                href: "mailto:code.cli.agent@gmail.com"
+            )
+        ])
+        links.orientation = .horizontal
+        links.alignment = .centerY
+        links.spacing = 16
+        links.translatesAutoresizingMaskIntoConstraints = false
+
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        let row = NSStackView(views: [helpPrompt, spacer, links])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 16
+        row.translatesAutoresizingMaskIntoConstraints = false
+        footer.addSubview(row)
+
+        NSLayoutConstraint.activate([
+            row.leadingAnchor.constraint(equalTo: footer.leadingAnchor, constant: settingsColumnInset),
+            row.trailingAnchor.constraint(equalTo: footer.trailingAnchor, constant: -settingsColumnInset),
+            row.centerYAnchor.constraint(equalTo: footer.centerYAnchor)
+        ])
+
+        return footer
+    }
+
+    private func makeFooterLink(title: String, href: String) -> HyperlinkTextField {
+        let link = HyperlinkTextField(frame: .zero)
+        link.stringValue = title
+        link.href = href
+        link.isBezeled = false
+        link.drawsBackground = false
+        link.isEditable = false
+        link.isSelectable = false
+        link.focusRingType = .none
+        link.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        link.textColor = .linkColor
+        link.setContentHuggingPriority(.required, for: .horizontal)
+        return link
+    }
+
     private func makeSectionHeader(_ text: String) -> NSTextField {
         let label = NSTextField(labelWithString: text)
-        label.font = NSFont.systemFont(ofSize: 15, weight: .semibold)
+        label.font = NSFont.systemFont(ofSize: NSFont.systemFontSize, weight: .semibold)
         label.textColor = .labelColor
         label.alignment = .left
         return label
@@ -512,9 +603,16 @@ extension PreferencesViewController {
         let imageWidth: CGFloat = 16
         
         
-        let images = ["drop", "bag", "gamecontroller", "poweron", "chevron.forward", "battery.100", "wifi", "magnifyingglass", "switch.2"].map { symbolName in
+        let hiddenIcons = ["drop", "bag", "gamecontroller", "cloud", "headphones"].map { symbolName in
             NSImageView(image: Assets.systemSymbol(named: symbolName)!)
         }
+        let shownIcons = ["display", "speaker.wave.2", "moon", "battery.100", "wifi", "magnifyingglass", "switch.2"].map { symbolName in
+            NSImageView(image: Assets.systemSymbol(named: symbolName)!)
+        }
+
+        let separatorImage = NSImageView(image: Assets.separatorImage!)
+        separatorImage.alphaValue = 0.6
+        let images = hiddenIcons + [separatorImage, NSImageView(image: Assets.collapseImage!)] + shownIcons
         
         
         for image in images {
@@ -534,17 +632,22 @@ extension PreferencesViewController {
         dateTimeLabel.isEditable = false
         dateTimeLabel.sizeToFit()
         dateTimeLabel.backgroundColor = .clear
+        dateTimeLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
         statusBarStackView.addArrangedSubview(dateTimeLabel)
         NSLayoutConstraint.activate([dateTimeLabel.heightAnchor.constraint(equalToConstant: imageWidth)
         ])
        
         updateTutorialArrowConstraints(
-            hiddenArrowAnchor: statusBarStackView.arrangedSubviews[3].centerXAnchor
+            hiddenArrowAnchor: separatorImage.centerXAnchor,
+            hiddenLabelAnchor: hiddenIcons[hiddenIcons.count / 2].centerXAnchor,
+            shownLabelAnchor: shownIcons[shownIcons.count / 2].centerXAnchor
         )
     }
 
     private func updateTutorialArrowConstraints(
-        hiddenArrowAnchor: NSLayoutXAxisAnchor
+        hiddenArrowAnchor: NSLayoutXAxisAnchor,
+        hiddenLabelAnchor: NSLayoutXAxisAnchor,
+        shownLabelAnchor: NSLayoutXAxisAnchor
     ) {
         NSLayoutConstraint.deactivate(tutorialArrowConstraints)
         NSLayoutConstraint.deactivate(tutorialStateLabelConstraints)
@@ -555,21 +658,11 @@ extension PreferencesViewController {
 
         if
             let hiddenLabel = tutorialHiddenLabel,
-            let shownLabel = tutorialShownLabel,
-            statusBarStackView.arrangedSubviews.count > 6
+            let shownLabel = tutorialShownLabel
         {
-            let hiddenIcon = statusBarStackView.arrangedSubviews[1]
-            let firstShownIcon = statusBarStackView.arrangedSubviews[5]
-            let secondShownIcon = statusBarStackView.arrangedSubviews[6]
             tutorialStateLabelConstraints = [
-                hiddenLabel.centerXAnchor.constraint(equalTo: hiddenIcon.centerXAnchor),
-                shownLabel.centerXAnchor.constraint(
-                    equalTo: firstShownIcon.trailingAnchor,
-                    constant: statusBarStackView.spacing / 2
-                ),
-                shownLabel.centerXAnchor.constraint(
-                    lessThanOrEqualTo: secondShownIcon.centerXAnchor
-                )
+                hiddenLabel.centerXAnchor.constraint(equalTo: hiddenLabelAnchor),
+                shownLabel.centerXAnchor.constraint(equalTo: shownLabelAnchor)
             ]
         }
 

@@ -3,27 +3,20 @@ import AppKit
 enum ExpandCollapseAction: Equatable {
     case toggle
     case contextMenu
-    case toggleSeparators
 }
 
 enum ExpandCollapseActionResolver {
     static func action(for event: NSEvent?) -> ExpandCollapseAction {
-        action(
-            eventType: event?.type,
-            optionPressed: event?.modifierFlags.contains(.option) ?? false
-        )
+        action(eventType: event?.type)
     }
 
-    static func action(eventType: NSEvent.EventType?, optionPressed: Bool) -> ExpandCollapseAction {
+    static func action(eventType: NSEvent.EventType?) -> ExpandCollapseAction {
         guard let eventType else { return .toggle }
 
-        if eventType == .leftMouseUp && !optionPressed {
-            return .toggle
-        }
-        if eventType == .rightMouseUp && !optionPressed {
+        if eventType == .rightMouseUp {
             return .contextMenu
         }
-        return .toggleSeparators
+        return .toggle
     }
 }
 
@@ -44,6 +37,47 @@ enum StatusBarLayout {
 }
 
 @MainActor
+enum StatusBarGlyphLayout {
+    static func updateEdgeConstraint(
+        _ edgeConstraint: inout NSLayoutConstraint?,
+        glyphView: NSView,
+        button: NSView,
+        isLTR: Bool,
+        inset: CGFloat
+    ) {
+        edgeConstraint?.isActive = false
+        let updatedConstraint: NSLayoutConstraint
+        if isLTR {
+            updatedConstraint = glyphView.trailingAnchor.constraint(
+                equalTo: button.trailingAnchor,
+                constant: -inset
+            )
+        } else {
+            updatedConstraint = glyphView.leadingAnchor.constraint(
+                equalTo: button.leadingAnchor,
+                constant: inset
+            )
+        }
+        updatedConstraint.isActive = true
+        edgeConstraint = updatedConstraint
+    }
+}
+
+@MainActor
+private final class StatusBarGlyphView: NSImageView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
+    }
+}
+
+@MainActor
+private final class StatusBarSeparatorView: NSImageView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        nil
+    }
+}
+
+@MainActor
 class StatusBarController {
     
     //MARK: - Variables
@@ -53,32 +87,43 @@ class StatusBarController {
 
     // Created and named in declaration order on purpose: a status item registers
     // with the menu bar under its autosave name, and on macOS 27 every new name
-    // lands left of the previous one, so the bar reads separator, spacers, arrow.
-    private let btnExpandCollapse = StatusBarController.makeItem("hiddenbar_expandcollapse", length: NSStatusItem.variableLength)
+    // lands left of the previous one, so the item order is anchor, spacers, arrow.
+    private static let expandedButtonLength: CGFloat = 24
+    private static let expandedAnchorLength: CGFloat = 20
+    private let btnExpandCollapse = StatusBarController.makeItem(
+        "hiddenbar_expandcollapse",
+        length: StatusBarController.expandedButtonLength
+    )
     private let spacers: [NSStatusItem] = StatusBarController.makeSpacers()  // macOS 27 only, empty elsewhere
-    private let btnSeparate = StatusBarController.makeItem("hiddenbar_separate", length: 1)
+    // Keep the legacy autosave name and position. The divider owns the expanding
+    // collapse boundary so the chevron remains a normal, reachable status item.
+    private let collapseAnchor = StatusBarController.makeItem(
+        "hiddenbar_separate",
+        length: StatusBarController.expandedAnchorLength
+    )
     
-    private var btnHiddenLength: CGFloat = 20
-    private var btnHiddenCollapseLength: CGFloat = 2000
-    
-    private let imgIconSeparator = Assets.separatorImage
+    private var collapsedBoundaryLength: CGFloat = 2000
+    private var toggleGlyphView: StatusBarGlyphView?
+    private var glyphEdgeConstraint: NSLayoutConstraint?
+    private var separatorView: StatusBarSeparatorView?
+    private var separatorEdgeConstraint: NSLayoutConstraint?
     
     private var isCollapsed: Bool {
         // Compare with > rather than == so the state survives updateCollapsedLengths
-        // changing btnHiddenCollapseLength while the bar is collapsed.
-        return self.btnSeparate.length > self.btnHiddenLength
+        // changing collapsedBoundaryLength while the bar is collapsed.
+        return self.collapseAnchor.length > Self.expandedAnchorLength
     }
     
-    private var isBtnSeparateValidPosition: Bool {
+    private var isCollapseAnchorPositionValid: Bool {
         guard
             let btnExpandCollapseX = self.btnExpandCollapse.button?.getOrigin?.x,
-            let btnSeparateX = self.btnSeparate.button?.getOrigin?.x
+            let collapseAnchorX = self.collapseAnchor.button?.getOrigin?.x
             else {return false}
         
         if Constant.isUsingLTRLanguage {
-            return btnExpandCollapseX >= btnSeparateX
+            return btnExpandCollapseX >= collapseAnchorX
         } else {
-            return btnExpandCollapseX <= btnSeparateX
+            return btnExpandCollapseX <= collapseAnchorX
         }
     }
     
@@ -87,8 +132,8 @@ class StatusBarController {
     // macOS 27 keeps every item's position in its own layout table, keyed by
     // autosave name, and the app can neither read nor seed it. A new item always
     // lands leftmost. The spacers can therefore only end up between the arrow
-    // and the separator if all three are registered fresh, in order, so on 27 the
-    // items use new names. Upgraders drag their icons past the separator once,
+    // and the anchor if all three are registered fresh, in order, so on 27 the
+    // items use new names. Upgraders drag their icons past the arrow once,
     // as on a fresh install.
     private static let autosaveSuffix = "_v27"
 
@@ -107,15 +152,15 @@ class StatusBarController {
         return item
     }
 
-    // Below the cliff macOS 27 pushes the icons left of the separator into its
-    // native overflow menu («), but only once they reach the frontmost app's
-    // menus. One unit does not span that distance on wide displays, so the
-    // separator gets company: zero-length items to its right that inflate with
-    // it. macOS overflows from the left, so the icons go first and the spacers
-    // stay; surplus spacers overflow themselves, which is harmless. The count
-    // is fixed so every launch registers the same names: a name first seen on a
-    // later launch would land leftmost, outside the block. Seven units cover a
-    // 5800pt display next to an 1800pt one.
+    // Below the cliff macOS pushes status items to the left of the divider into
+    // its native overflow menu («), but only once they reach the frontmost app's
+    // menus. One unit does not span that distance on wide displays, so fixed
+    // zero-length items after the divider inflate with it. macOS overflows
+    // from the left, so user icons go first and the spacers stay; surplus
+    // spacers overflow themselves, which is harmless. The count is fixed so
+    // every launch registers the same names: a name first seen later would land
+    // leftmost, outside the block. Seven units cover a 5800pt display next to
+    // an 1800pt one.
     private static func makeSpacers() -> [NSStatusItem] {
         return (0..<6).map { index in
             let item = makeItem("hiddenbar_spacer\(index)", length: 0)
@@ -140,13 +185,13 @@ class StatusBarController {
     }
 
     // Keep every spacer registered, but make only the active spacers visible
-    // while collapsed. Their lengths provide the span between the arrow and
-    // separator; inactive spacers stay hidden at zero length.
+    // while collapsed. Their lengths extend the divider's collapse boundary;
+    // inactive spacers stay hidden at zero length.
     private func setSpacersInflated(_ inflated: Bool) {
         let activeCount = inflated ? activeSpacerCount : 0
         for (index, spacer) in spacers.enumerated() {
             let shouldBeVisible = index < activeCount
-            let targetLength = shouldBeVisible ? btnHiddenCollapseLength : 0
+            let targetLength = shouldBeVisible ? collapsedBoundaryLength : 0
 
             if spacer.isVisible != shouldBeVisible {
                 spacer.isVisible = shouldBeVisible
@@ -194,7 +239,6 @@ class StatusBarController {
             self?.collapseMenuBarOnLaunch(attemptsLeft: 10)
         }
         
-        if Preferences.areSeparatorsHidden {hideSeparators()}
         autoCollapseIfNeeded()
     }
     
@@ -238,21 +282,21 @@ class StatusBarController {
     }
     
     @objc private func handleScreenParametersChanged() {
-        // Re-apply the recomputed length to the LIVE item when collapsed, or a
-        // display hot-plug leaves the separator at a stale length.
+        // Re-apply the recomputed length to the LIVE items when collapsed, or a
+        // display hot-plug leaves the divider and spacers at stale lengths.
         let wasCollapsed = isCollapsed
         updateCollapsedLengths()
         if wasCollapsed {
-            btnSeparate.length = btnHiddenCollapseLength
+            collapseAnchor.length = collapsedBoundaryLength
             setSpacersInflated(true)
         }
     }
 
     private func updateCollapsedLengths() {
-        // One collapse unit is applied to every display's copy of the status
-        // item. Spacers cover the remaining width on wider displays, while
+        // One collapse unit is applied to every display's copy of the divider.
+        // Spacers cover the remaining width on wider displays, while
         // displaced icons go into macOS 27's native overflow menu.
-        btnHiddenCollapseLength = StatusBarController.collapseUnit
+        collapsedBoundaryLength = StatusBarController.collapseUnit
     }
     
     private func restoreRemovedStatusItems() {
@@ -260,66 +304,119 @@ class StatusBarController {
         // autosaveName, leaving the app running but unreachable. These items are
         // the app's only UI, so they self-restore at launch.
         btnExpandCollapse.isVisible = true
-        btnSeparate.isVisible = true
+        collapseAnchor.isVisible = true
     }
 
     private func setupUI() {
-        if let button = btnSeparate.button {
-            button.image = self.imgIconSeparator
+        if let button = collapseAnchor.button {
+            button.image = nil
+            button.title = ""
+
+            let separatorView = StatusBarSeparatorView()
+            separatorView.image = Assets.separatorImage
+            separatorView.imageScaling = .scaleProportionallyDown
+            separatorView.alphaValue = 0.6
+            separatorView.translatesAutoresizingMaskIntoConstraints = false
+            button.addSubview(separatorView)
+            self.separatorView = separatorView
+
+            NSLayoutConstraint.activate([
+                separatorView.widthAnchor.constraint(equalToConstant: 16),
+                separatorView.heightAnchor.constraint(equalToConstant: 16),
+                separatorView.centerYAnchor.constraint(equalTo: button.centerYAnchor)
+            ])
+            updateSeparatorPositionConstraint(separatorView: separatorView, button: button)
         }
         let menu = self.getContextMenu()
-        btnSeparate.menu = menu
+        collapseAnchor.menu = menu
 
         updateAutoCollapseMenuTitle()
         
         if let button = btnExpandCollapse.button {
-            button.image = Assets.collapseImage
+            button.image = nil
             button.target = self
             
             button.action = #selector(self.btnExpandCollapsePressed(sender:))
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
+
+            let glyphView = StatusBarGlyphView()
+            glyphView.image = Assets.collapseImage
+            glyphView.imageScaling = .scaleProportionallyDown
+            glyphView.translatesAutoresizingMaskIntoConstraints = false
+            button.addSubview(glyphView)
+
+            let glyphInset: CGFloat = 3
+            NSLayoutConstraint.activate([
+                glyphView.widthAnchor.constraint(equalToConstant: 16),
+                glyphView.heightAnchor.constraint(equalToConstant: 16),
+                glyphView.centerYAnchor.constraint(equalTo: button.centerYAnchor)
+            ])
+            toggleGlyphView = glyphView
+            updateGlyphPositionConstraint(inset: glyphInset)
         }
+    }
+
+    func updateGlyphPositionConstraint(inset: CGFloat = 3) {
+        guard let button = btnExpandCollapse.button, let toggleGlyphView else { return }
+        StatusBarGlyphLayout.updateEdgeConstraint(
+            &glyphEdgeConstraint,
+            glyphView: toggleGlyphView,
+            button: button,
+            isLTR: Constant.isUsingLTRLanguage,
+            inset: inset
+        )
+        if let separatorView, let separatorButton = collapseAnchor.button {
+            updateSeparatorPositionConstraint(
+                separatorView: separatorView,
+                button: separatorButton,
+                inset: inset
+            )
+        }
+    }
+
+    private func updateSeparatorPositionConstraint(
+        separatorView: NSView,
+        button: NSStatusBarButton,
+        inset: CGFloat = 3
+    ) {
+        separatorEdgeConstraint?.isActive = false
+        let updatedConstraint = Constant.isUsingLTRLanguage
+            ? separatorView.trailingAnchor.constraint(equalTo: button.trailingAnchor, constant: -inset)
+            : separatorView.leadingAnchor.constraint(equalTo: button.leadingAnchor, constant: inset)
+        updatedConstraint.isActive = true
+        separatorEdgeConstraint = updatedConstraint
     }
     
     @objc func btnExpandCollapsePressed(sender: NSStatusBarButton) {
+        if let event = NSApp.currentEvent {
+            // Command-dragging status items should only change their order.
+            guard !event.modifierFlags.contains(.command) else { return }
+        }
+
+        if let event = NSApp.currentEvent,
+           event.type == .leftMouseUp || event.type == .rightMouseUp {
+            let point = sender.convert(event.locationInWindow, from: nil)
+            guard let toggleGlyphView, toggleGlyphView.frame.contains(point) else { return }
+        }
+
         switch ExpandCollapseActionResolver.action(for: NSApp.currentEvent) {
         case .toggle:
             expandCollapseIfNeeded()
         case .contextMenu:
-            // Right-click opens the same context menu the separator has (#356),
+            // Right-click opens the same menu as the collapse divider,
             // making settings reachable from the control everyone clicks.
             showContextMenu(from: sender)
-        case .toggleSeparators:
-            // Both option+left and option+right land here: separators toggle.
-            showHideSeparators()
         }
     }
 
     private func showContextMenu(from button: NSStatusBarButton) {
-        guard let menu = btnSeparate.menu else { return }
-        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.maxY + 5), in: button)
-    }
-    
-    private func showHideSeparators() {
-        Preferences.areSeparatorsHidden ? self.showSeparators() : self.hideSeparators()
-        
-        if self.isCollapsed {self.expandMenubar()}
-    }
-    
-    private func showSeparators() {
-        Preferences.areSeparatorsHidden = false
-        
-        if !self.isCollapsed {
-            self.btnSeparate.length = self.btnHiddenLength
-        }
-    }
-    
-    private func hideSeparators() {
-        Preferences.areSeparatorsHidden = true
-        
-        if !self.isCollapsed {
-            self.btnSeparate.length = self.btnHiddenLength
-        }
+        guard let menu = collapseAnchor.menu, btnExpandCollapse.menu == nil else { return }
+
+        // Let the status item present its native pull-down menu. A generic popup
+        // can scroll its first rows offscreen when opened at the menu bar edge.
+        btnExpandCollapse.menu = menu
+        defer { btnExpandCollapse.menu = nil }
+        button.performClick(nil)
     }
     
     func expandCollapseIfNeeded() {
@@ -337,7 +434,7 @@ class StatusBarController {
     // Retry a few times; if the items were cmd-dragged out of order the guard
     // stays false and we stop, same as before.
     private func collapseMenuBarOnLaunch(attemptsLeft: Int) {
-        if isBtnSeparateValidPosition || attemptsLeft <= 0 {
+        if isCollapseAnchorPositionValid || attemptsLeft <= 0 {
             collapseMenuBar()
             return
         }
@@ -347,17 +444,14 @@ class StatusBarController {
     }
 
     private func collapseMenuBar() {
-        guard self.isBtnSeparateValidPosition && !self.isCollapsed else {
+        guard self.isCollapseAnchorPositionValid && !self.isCollapsed else {
             autoCollapseIfNeeded()
             return
         }
 
-        btnSeparate.length = self.btnHiddenCollapseLength
+        collapseAnchor.length = self.collapsedBoundaryLength
         setSpacersInflated(true)
-        setSeparatorGlyphVisible(false)
-        if let button = btnExpandCollapse.button {
-            button.image = Assets.expandImage
-        }
+        toggleGlyphView?.image = Assets.expandImage
         if Preferences.useFullStatusBarOnExpandEnabled {
             NSApp.setActivationPolicy(.accessory)
             NSApp.deactivate()
@@ -365,12 +459,9 @@ class StatusBarController {
     }
     private func expandMenubar() {
         guard self.isCollapsed else {return}
-        btnSeparate.length = btnHiddenLength
+        collapseAnchor.length = Self.expandedAnchorLength
         setSpacersInflated(false)
-        setSeparatorGlyphVisible(true)
-        if let button = btnExpandCollapse.button {
-            button.image = Assets.collapseImage
-        }
+        toggleGlyphView?.image = Assets.collapseImage
         autoCollapseIfNeeded()
         
         if Preferences.useFullStatusBarOnExpandEnabled {
@@ -385,13 +476,6 @@ class StatusBarController {
         guard !isCollapsed else { return }
 
         startTimerToAutoHide()
-    }
-
-    // The button draws the separator glyph centered in the item's span. On
-    // macOS 27 that span remains on-screen while collapsed, so hiding the glyph
-    // avoids a stray separator mid-menu-bar (#360). Clicks still land on the item.
-    private func setSeparatorGlyphVisible(_ visible: Bool) {
-        btnSeparate.button?.image = visible ? imgIconSeparator : nil
     }
 
     private func startTimerToAutoHide() {
@@ -415,6 +499,15 @@ class StatusBarController {
     private func getContextMenu() -> NSMenu {
         let menu = NSMenu()
         
+        let aboutItem = NSMenuItem(
+            title: "About Hideout".localized,
+            action: #selector(openAboutWindow),
+            keyEquivalent: ""
+        )
+        aboutItem.target = self
+        menu.addItem(aboutItem)
+        menu.addItem(NSMenuItem.separator())
+
         let prefItem = NSMenuItem(title: "Settings...".localized, action: #selector(openPreferenceViewControllerIfNeeded), keyEquivalent: ",")
         prefItem.keyEquivalentModifierMask = [.command]
         prefItem.target = self
@@ -433,7 +526,7 @@ class StatusBarController {
     }
     
     private func updateAutoCollapseMenuTitle() {
-        guard let toggleAutoHideItem = btnSeparate.menu?.item(withTag: 1) else { return }
+        guard let toggleAutoHideItem = collapseAnchor.menu?.item(withTag: 1) else { return }
         if Preferences.isAutoHide {
             toggleAutoHideItem.title = "Disable Auto Collapse".localized
         } else {
@@ -448,6 +541,10 @@ class StatusBarController {
     
     @objc func openPreferenceViewControllerIfNeeded() {
         Util.showPrefWindow()
+    }
+
+    @objc func openAboutWindow() {
+        Util.showAboutWindow()
     }
     
     @objc func toggleAutoHide() {

@@ -19,6 +19,7 @@
       "hidden" : false,
       "layers" : [
         {
+          "blend-mode" : "normal",
           "fill-specializations" : [
             {
               "value" : {
@@ -34,21 +35,20 @@
           ],
           "glass" : true,
           "image-name" : "bar.svg",
-          "name" : "bar",
+          "name" : "left-chevron",
           "position" : {
-            "scale" : 1,
+            "scale" : 0.68,
             "translation-in-points" : [
-              58,
+              30,
               0
             ]
           }
         },
         {
+          "blend-mode" : "normal",
           "fill-specializations" : [
             {
-              "value" : {
-                "solid" : "extended-gray:0.00000,1.00000"
-              }
+              "value" : "automatic"
             },
             {
               "appearance" : "dark",
@@ -59,12 +59,12 @@
           ],
           "glass" : true,
           "image-name" : "chevron.svg",
-          "name" : "chevron",
+          "name" : "right-chevron",
           "position" : {
-            "scale" : 1,
+            "scale" : 0.68,
             "translation-in-points" : [
-              34,
-              0.09964138839848147
+              -30,
+              0
             ]
           }
         }
