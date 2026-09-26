@@ -106,7 +106,7 @@ jobs:
           base_version="${tag_version%%-*}"
           changelog_anchor="${base_version//./}"
           changelog_url="https://github.com/${GITHUB_REPOSITORY}/blob/${tag}/CHANGELOG.md#${changelog_anchor}"
-          release_notes="$(cat <<EOF
+          release_notes=$(cat <<EOF
           The ${tag} DMG uses a sealed ad-hoc signature so macOS does not reject the downloaded app bundle as damaged.
 
           ## What's new in ${tag_version}
@@ -123,7 +123,7 @@ jobs:
 
           Full changelog: [CHANGELOG.md](${changelog_url})
           EOF
-          )"
+          )
           release_args=(
             "$tag"
             "${{ steps.package.outputs.dmg }}"
