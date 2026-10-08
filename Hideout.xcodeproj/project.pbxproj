@@ -34,6 +34,7 @@
 		967F4B2524169BC800F18D3C /* String+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 967F4B2424169BC800F18D3C /* String+Extension.swift */; };
 		967F4B2824169CAF00F18D3C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 967F4B2A24169CAF00F18D3C /* Localizable.strings */; };
 		C4A1C0DE27000000000001 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = C4A1C0DE27000000000002 /* AppIcon.icon */; };
+		D20000000000000000000001 /* DiagnosticsLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000002 /* DiagnosticsLogger.swift */; };
 		A10000000000000000000001 /* SelectedSecondTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* SelectedSecondTests.swift */; };
 		A10000000000000000000002 /* GlobalKeybindPreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* GlobalKeybindPreferencesTests.swift */; };
 		A10000000000000000000003 /* PreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* PreferencesTests.swift */; };
@@ -114,6 +115,7 @@
 		B10000000000000000000006 /* AutoStartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoStartTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000011 /* HideoutTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HideoutTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D10000000000000000000001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+		D20000000000000000000002 /* DiagnosticsLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsLogger.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -198,6 +200,7 @@
 		9267D3212201A49200EFFCE2 /* Common */ = {
 			isa = PBXGroup;
 			children = (
+				D20000000000000000000002 /* DiagnosticsLogger.swift */,
 				92C97B87220032ED0007559C /* Util.swift */,
 				00117C4326600671005E517C /* Assets.swift */,
 				92C97B8E220147FE0007559C /* Constant.swift */,
@@ -414,6 +417,7 @@
 				0842CDFB23A9FDD000D14BD4 /* GlobalKeybindingPreferences.swift in Sources */,
 				55F3F11D2608925A0054B881 /* StackView+Extension.swift in Sources */,
 				A20000000000000000000001 /* GlobalShortcut.swift in Sources */,
+				D20000000000000000000001 /* DiagnosticsLogger.swift in Sources */,
 				08C20FE223AB452C0035D978 /* AboutViewController.swift in Sources */,
 				00137CDF24A63DB1004AC855 /* Notification.Name+Extension.swift in Sources */,
 				08A5F86423AA09F300981CA5 /* UserDefault+Extension.swift in Sources */,
@@ -546,7 +550,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG HIDEOUT_DIAGNOSTICS";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -620,7 +624,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = "20261008.2";
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Hideout/Info.plist;
@@ -632,7 +636,7 @@
 				LM_ENABLE_LINK_GENERATION = YES;
 				LM_FORCE_LINK_GENERATION = YES;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.danilrez.hideout;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -649,7 +653,7 @@
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = "20261008.2";
 				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = Hideout/Info.plist;
@@ -661,7 +665,7 @@
 				LM_ENABLE_LINK_GENERATION = YES;
 				LM_FORCE_LINK_GENERATION = YES;
 				MACOSX_DEPLOYMENT_TARGET = 27.0;
-				MARKETING_VERSION = 0.2.0;
+				MARKETING_VERSION = 0.2.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.danilrez.hideout;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

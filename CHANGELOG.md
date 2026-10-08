@@ -2,6 +2,18 @@
 
 All notable changes to Hideout are documented here.
 
+## [0.2.2]
+
+### Fixed
+
+- Fixed a bug where collapsing menu bar items could also hide the Hideout chevron.
+
+## [0.2.1]
+
+### Fixed
+
+- Fixed a bug where collapsing menu bar items could also hide the Hideout chevron.
+
 ## [0.2.0]
 
 - Updated the menu bar control for macOS 27 with a double-chevron and kept the full context menu visible near screen edges.

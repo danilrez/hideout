@@ -43,14 +43,31 @@ jobs:
             exit 1
           fi
 
+          build_version="$(date -u +%Y%m%d).${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}"
+          echo "BUILD_VERSION=$build_version" >> "$GITHUB_ENV"
+          echo "Building Hideout $tag with build $build_version"
+
+          signing_entitlements="Hideout/Hideout.entitlements"
+          archive_settings=(
+            "CURRENT_PROJECT_VERSION=$build_version"
+            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_REQUIRED=NO
+          )
+
+          if [[ "$tag_version" == *-* || "$tag_version" == "0.2.2" ]]; then
+            signing_entitlements="Hideout/HideoutDiagnostics.entitlements"
+            archive_settings+=(SWIFT_ACTIVE_COMPILATION_CONDITIONS=HIDEOUT_DIAGNOSTICS)
+          fi
+
+          echo "SIGNING_ENTITLEMENTS=$signing_entitlements" >> "$GITHUB_ENV"
+
           xcodebuild archive \
             -project "$PROJECT" \
             -scheme "$SCHEME" \
             -configuration "$CONFIGURATION" \
             -destination 'generic/platform=macOS' \
             -archivePath "$RUNNER_TEMP/Hideout.xcarchive" \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
+            "${archive_settings[@]}"
 
       - name: Seal app with an ad-hoc signature
         shell: bash
@@ -65,7 +82,7 @@ jobs:
             --deep \
             --sign - \
             --options runtime \
-            --entitlements Hideout/Hideout.entitlements \
+            --entitlements "$SIGNING_ENTITLEMENTS" \
             "$app_path"
           codesign --verify --deep --strict --verbose=2 "$app_path"
 
@@ -78,7 +95,7 @@ jobs:
           tag="${GITHUB_REF_NAME}"
           app_path="$RUNNER_TEMP/Hideout.xcarchive/Products/Applications/Hideout.app"
           staging_path="$RUNNER_TEMP/Hideout-dmg"
-          dmg_path="$RUNNER_TEMP/Hideout-${tag}.dmg"
+          dmg_path="$RUNNER_TEMP/Hideout-${tag}-build-${BUILD_VERSION}.dmg"
 
           test -d "$app_path"
           mkdir -p "$staging_path"
@@ -106,12 +123,23 @@ jobs:
           base_version="${tag_version%%-*}"
           changelog_anchor="${base_version//./}"
           changelog_url="https://github.com/${GITHUB_REPOSITORY}/blob/${tag}/CHANGELOG.md#${changelog_anchor}"
+          changelog_section="$(awk -v version="$base_version" '
+            $0 == "## [" version "]" { in_section = 1; next }
+            in_section && /^## \[/ { exit }
+            in_section { print }
+          ' CHANGELOG.md)"
+
+          if [[ -z "$(printf '%s' "$changelog_section" | tr -d '[:space:]')" ]]; then
+            echo "No changelog entry found for version $base_version" >&2
+            exit 1
+          fi
+
           release_notes=$(cat <<EOF
           The ${tag} DMG uses a sealed ad-hoc signature so macOS does not reject the downloaded app bundle as damaged.
 
           ## What's new in ${tag_version}
 
-          - The archived app is sealed with an ad-hoc signature before the DMG is created.
+          ${changelog_section}
 
           ## Before you install
 

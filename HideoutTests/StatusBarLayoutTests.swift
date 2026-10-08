@@ -1,5 +1,6 @@
 import CoreGraphics
 import AppKit
+import Foundation
 import XCTest
 @testable import Hideout
 
@@ -47,6 +48,74 @@ final class StatusBarLayoutTests: XCTestCase {
         )
     }
 
+    func testChevronMustBeAfterAnchorInLTRLayout() {
+        let anchor = CGRect(x: 100, y: 0, width: 20, height: 22)
+        XCTAssertTrue(
+            StatusBarLayout.isChevronSeparatedFromAnchor(
+                arrowFrame: CGRect(x: 120, y: 0, width: 24, height: 22),
+                anchorFrame: anchor,
+                isLTR: true
+            )
+        )
+        XCTAssertFalse(
+            StatusBarLayout.isChevronSeparatedFromAnchor(
+                arrowFrame: CGRect(x: 119, y: 0, width: 24, height: 22),
+                anchorFrame: anchor,
+                isLTR: true
+            )
+        )
+    }
+
+    func testChevronMustBeBeforeAnchorInRTLLayout() {
+        let anchor = CGRect(x: 100, y: 0, width: 20, height: 22)
+        XCTAssertTrue(
+            StatusBarLayout.isChevronSeparatedFromAnchor(
+                arrowFrame: CGRect(x: 56, y: 0, width: 24, height: 22),
+                anchorFrame: anchor,
+                isLTR: false
+            )
+        )
+        XCTAssertFalse(
+            StatusBarLayout.isChevronSeparatedFromAnchor(
+                arrowFrame: CGRect(x: 77, y: 0, width: 24, height: 22),
+                anchorFrame: anchor,
+                isLTR: false
+            )
+        )
+    }
+
+    func testCollapsedLayoutOrderDetectsChevronMovingAcrossAnchor() {
+        let anchor = CGRect(x: 100, y: 0, width: 836, height: 22)
+        XCTAssertTrue(
+            StatusBarLayout.hasExpectedItemOrder(
+                arrowFrame: CGRect(x: 140, y: 0, width: 24, height: 22),
+                anchorFrame: anchor,
+                isLTR: true
+            )
+        )
+        XCTAssertFalse(
+            StatusBarLayout.hasExpectedItemOrder(
+                arrowFrame: CGRect(x: 99, y: 0, width: 24, height: 22),
+                anchorFrame: anchor,
+                isLTR: true
+            )
+        )
+        XCTAssertTrue(
+            StatusBarLayout.hasExpectedItemOrder(
+                arrowFrame: CGRect(x: 76, y: 0, width: 24, height: 22),
+                anchorFrame: anchor,
+                isLTR: false
+            )
+        )
+        XCTAssertFalse(
+            StatusBarLayout.hasExpectedItemOrder(
+                arrowFrame: CGRect(x: 101, y: 0, width: 24, height: 22),
+                anchorFrame: anchor,
+                isLTR: false
+            )
+        )
+    }
+
     @MainActor
     func testGlyphFollowsDetectedDirectionAfterButtonExpands() {
         let button = NSView(frame: NSRect(x: 0, y: 0, width: 24, height: 22))
@@ -85,4 +154,26 @@ final class StatusBarLayoutTests: XCTestCase {
 
         XCTAssertEqual(glyph.frame.minX, 817, accuracy: 0.5)
     }
+
+#if HIDEOUT_DIAGNOSTICS
+    @MainActor
+    func testDiagnosticsRequireConfigJSONWithDebugString() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("HideoutDiagnosticsTests-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let configurationURL = directory.appendingPathComponent("config.json")
+        XCTAssertFalse(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
+
+        try Data("{}".utf8).write(to: configurationURL)
+        XCTAssertFalse(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
+
+        try Data(#"{"debug":"enabled"}"#.utf8).write(to: configurationURL)
+        XCTAssertTrue(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
+
+        try Data(#"{"debug":true}"#.utf8).write(to: configurationURL)
+        XCTAssertFalse(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
+    }
+#endif
 }

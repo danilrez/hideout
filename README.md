@@ -1,11 +1,12 @@
 # Hideout
 
-Hideout keeps your macOS menu bar tidy by moving selected menu bar items into
-the system overflow area until you need them.
+Hideout keeps your macOS menu bar tidy by moving selected menu bar items into the system overflow area until you need them.
 
 ## Preview
 
-![Hideout preview](docs/previews/Preview.gif)
+<p align="center">
+  <img src="docs/previews/Preview.gif?v=0.2.0" alt="Hideout usage preview" width="900">
+</p>
 
 ## Features
 
@@ -19,25 +20,21 @@ the system overflow area until you need them.
 
 ## Installation
 
-Download the latest DMG from the [GitHub Releases](https://github.com/danilrez/Hideout/releases)
-page, open it, and drag `Hideout.app` to `/Applications`.
+Download the latest DMG from the [GitHub Releases](https://github.com/danilrez/Hideout/releases) page, open it, and drag `Hideout.app` to `/Applications`.
 
-Release DMGs use an ad-hoc signature to seal the application bundle and its
-resources. They are not signed with an Apple Developer ID certificate or
-notarized, so macOS may require a manual confirmation the first time a
-downloaded build is opened.
+Release DMGs use an ad-hoc signature to seal the application bundle and its resources. They are not signed with an Apple Developer ID certificate or notarized, so macOS may require a manual confirmation the first time a downloaded build is opened.
 
 ## Usage
 
-1. Launch Hideout. Its arrow appears in the menu bar. By default, the
-   preferences window opens at launch.
-2. Hold `⌘` and drag menu bar icons past the `>>` control to choose which items
-   Hideout manages.
+1. Launch Hideout. Its arrow appears in the menu bar. By default, the preferences window opens at launch.
+2. Hold `⌘` and drag menu bar icons past the `>>` control to choose which items Hideout manages.
 3. Click the arrow to collapse or expand the managed items.
-4. Right-click the arrow to open Settings, toggle automatic collapse, or quit
-   Hideout.
-5. In Settings, configure the global shortcut, automatic hiding delay, login
-   launch, and whether the preferences window opens at launch.
+4. Right-click the arrow to open Settings, toggle automatic collapse, or quit Hideout.
+5. In Settings, configure the global shortcut, automatic hiding delay, login launch, and whether the preferences window opens at launch.
+
+<p align="center">
+  <img src="docs/previews/Settings.png?v=0.2.0" alt="Hideout Settings" width="720">
+</p>
 
 ## License
 

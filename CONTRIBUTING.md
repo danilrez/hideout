@@ -49,7 +49,7 @@ find Hideout -name '*.strings' -print0 | xargs -0 plutil -lint
 
 ## Release DMG
 
-Use semantic version tags in the form `vMAJOR.MINOR.PATCH`. Match `MARKETING_VERSION` to the tag and increment `CURRENT_PROJECT_VERSION` for each build. Create and push the matching tag when preparing a release.
+Use semantic version tags in the form `vMAJOR.MINOR.PATCH`. Match `MARKETING_VERSION` to the tag. The Release DMG workflow generates `CFBundleVersion` as `YYYYMMDD.<run>.<attempt>` using the UTC build date and GitHub Actions run number and attempt; it also includes that value in the DMG filename. Direct Xcode builds use `CURRENT_PROJECT_VERSION` from the project, which should follow the same numeric format. Create and push the matching tag when preparing a release.
 
 The `Release DMG` workflow builds a macOS 27 archive, seals and verifies `Hideout.app` with an ad-hoc signature, then publishes the DMG with an `Applications` shortcut. Ad-hoc signing isn’t Developer ID signing or notarization; macOS may ask users to confirm the first launch.
 
@@ -58,7 +58,7 @@ The `Release DMG` workflow builds a macOS 27 archive, seals and verifies `Hideou
 - Keep AppKit state and UI work on `@MainActor`. Fix Swift 6 isolation errors; don’t mask them with `@unchecked Sendable`.
 - Use the macOS 27 APIs and behavior already established in the project.
 - Preserve the `hiddenbar_*_v27` status-item autosave names and declaration order. They keep macOS 27 menu bar placement separate from older layouts. An existing installation may need a one-time `⌘`-drag after upgrading. Recheck placement before renaming or reordering these items.
-- The Release DMG workflow signs with `Hideout/Hideout.entitlements`; local verification builds disable signing. Discuss changes to entitlements, network access, subprocesses, or dependencies before making them.
+- The Release DMG workflow selects signing entitlements by tag; local verification builds disable signing. Discuss changes to entitlements, network access, subprocesses, or dependencies before making them.
 - Put user-facing strings in localization resources. Update storyboard companion strings when changing storyboard text.
 - Keep changes focused; don’t reformat unrelated files or edit generated artifacts.
 

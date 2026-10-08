@@ -24,7 +24,11 @@ extension NSEvent.ModifierFlags {
 
 private enum GlobalShortcutConstants {
     static let eventHotKeySignature: OSType = 0x486F7574 // "Hout"
-    static let eventHotKeyID: UInt32 = 1
+    static let menuBarToggleEventHotKeyID: UInt32 = 1
+#if HIDEOUT_DIAGNOSTICS
+    static let diagnosticsEventHotKeyID: UInt32 = 2
+    static let diagnosticsFallbackEventHotKeyID: UInt32 = 3
+#endif
     static let eventSpec = [
         EventTypeSpec(
             eventClass: OSType(kEventClassKeyboard),
@@ -36,26 +40,106 @@ private enum GlobalShortcutConstants {
 @MainActor
 final class GlobalShortcutController {
     var onKeyDown: (() -> Void)?
+#if HIDEOUT_DIAGNOSTICS
+    var onDiagnosticsKeyDown: (() -> Void)?
+#endif
 
-    private var eventHotKey: EventHotKeyRef?
+    private var eventHotKeys: [UInt32: EventHotKeyRef] = [:]
     private var eventHandler: EventHandlerRef?
+#if HIDEOUT_DIAGNOSTICS
+    private var diagnosticsConfigurationMonitor: Timer?
+    private var diagnosticsConfigurationEnabled = false
+#endif
 
     init() {
         installEventHandler()
+#if HIDEOUT_DIAGNOSTICS
+        synchronizeDiagnosticsShortcuts()
+        diagnosticsConfigurationMonitor = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.synchronizeDiagnosticsShortcuts()
+            }
+        }
+#endif
     }
 
     func register(keyCode: UInt32, modifiers: UInt32) {
-        unregister()
+        register(
+            keyCode: keyCode,
+            modifiers: modifiers,
+            hotKeyID: GlobalShortcutConstants.menuBarToggleEventHotKeyID,
+            action: "menuBarToggle"
+        )
+#if HIDEOUT_DIAGNOSTICS
+        synchronizeDiagnosticsShortcuts()
+#endif
+    }
 
-        let hotKeyID = EventHotKeyID(
+#if HIDEOUT_DIAGNOSTICS
+    private func synchronizeDiagnosticsShortcuts() {
+        let shouldEnable = HideoutDiagnostics.isEnabled
+        guard shouldEnable != diagnosticsConfigurationEnabled else { return }
+
+        diagnosticsConfigurationEnabled = shouldEnable
+        if shouldEnable {
+            registerDiagnosticsShortcuts()
+            HideoutDiagnostics.record("diagnostics.configurationEnabled")
+        } else {
+            unregisterDiagnosticsShortcuts()
+        }
+    }
+
+    private func registerDiagnosticsShortcuts() {
+        let modifiers = UInt32(cmdKey) | UInt32(optionKey) | UInt32(controlKey)
+        var registeredShortcuts: [String] = []
+
+        if register(
+            keyCode: UInt32(kVK_ANSI_D),
+            modifiers: modifiers,
+            hotKeyID: GlobalShortcutConstants.diagnosticsEventHotKeyID,
+            action: "openDiagnosticsPrimary"
+        ) {
+            registeredShortcuts.append("⌃⌥⌘D")
+        }
+
+        if register(
+            keyCode: UInt32(kVK_ANSI_L),
+            modifiers: modifiers,
+            hotKeyID: GlobalShortcutConstants.diagnosticsFallbackEventHotKeyID,
+            action: "openDiagnosticsFallback"
+        ) {
+            registeredShortcuts.append("⌃⌥⌘L")
+        }
+
+        HideoutDiagnostics.record("diagnostics.shortcutsAvailable", fields: [
+            "shortcuts": registeredShortcuts.joined(separator: ",")
+        ])
+    }
+
+    private func unregisterDiagnosticsShortcuts() {
+        unregister(hotKeyID: GlobalShortcutConstants.diagnosticsEventHotKeyID)
+        unregister(hotKeyID: GlobalShortcutConstants.diagnosticsFallbackEventHotKeyID)
+    }
+#endif
+
+    @discardableResult
+    private func register(
+        keyCode: UInt32,
+        modifiers: UInt32,
+        hotKeyID: UInt32,
+        action: String
+    ) -> Bool {
+        unregister(hotKeyID: hotKeyID)
+
+        let carbonHotKeyID = EventHotKeyID(
             signature: GlobalShortcutConstants.eventHotKeySignature,
-            id: GlobalShortcutConstants.eventHotKeyID
+            id: hotKeyID
         )
         var registeredHotKey: EventHotKeyRef?
         let status = RegisterEventHotKey(
             keyCode,
             modifiers,
-            hotKeyID,
+            carbonHotKeyID,
             GetEventDispatcherTarget(),
             0,
             &registeredHotKey
@@ -63,20 +147,33 @@ final class GlobalShortcutController {
 
         guard status == noErr, let registeredHotKey else {
             NSLog("GlobalShortcut: failed to register shortcut (status: %d)", status)
-            return
+            HideoutDiagnostics.record("globalShortcut.registrationFailed", fields: [
+                "action": action,
+                "status": String(status)
+            ])
+            return false
         }
 
-        eventHotKey = registeredHotKey
+        eventHotKeys[hotKeyID] = registeredHotKey
+        HideoutDiagnostics.record("globalShortcut.registered", fields: ["action": action])
+        return true
     }
 
     func unregister() {
-        guard let eventHotKey else { return }
+        unregister(hotKeyID: GlobalShortcutConstants.menuBarToggleEventHotKeyID)
+    }
+
+    private func unregister(hotKeyID: UInt32) {
+        guard let eventHotKey = eventHotKeys.removeValue(forKey: hotKeyID) else { return }
 
         let status = UnregisterEventHotKey(eventHotKey)
         if status != noErr {
             NSLog("GlobalShortcut: failed to unregister shortcut (status: %d)", status)
+            HideoutDiagnostics.record("globalShortcut.unregistrationFailed", fields: [
+                "hotKeyID": String(hotKeyID),
+                "status": String(status)
+            ])
         }
-        self.eventHotKey = nil
     }
 
     private func installEventHandler() {
@@ -112,21 +209,44 @@ final class GlobalShortcutController {
         )
 
         guard status == noErr,
-              hotKeyID.signature == GlobalShortcutConstants.eventHotKeySignature,
-              hotKeyID.id == GlobalShortcutConstants.eventHotKeyID
+              hotKeyID.signature == GlobalShortcutConstants.eventHotKeySignature
         else {
             return status == noErr ? OSStatus(eventNotHandledErr) : status
         }
 
-        Task { @MainActor [weak self] in
-            guard let self, self.eventHotKey != nil else { return }
-            self.onKeyDown?()
+        let registeredHotKeyID = hotKeyID.id
+        if registeredHotKeyID == GlobalShortcutConstants.menuBarToggleEventHotKeyID {
+            Task { @MainActor [weak self] in
+                guard let self, self.eventHotKeys[registeredHotKeyID] != nil else { return }
+                self.onKeyDown?()
+            }
+            return noErr
         }
-        return noErr
+
+#if HIDEOUT_DIAGNOSTICS
+        if registeredHotKeyID == GlobalShortcutConstants.diagnosticsEventHotKeyID
+            || registeredHotKeyID == GlobalShortcutConstants.diagnosticsFallbackEventHotKeyID {
+            Task { @MainActor [weak self] in
+                guard let self, self.eventHotKeys[registeredHotKeyID] != nil else { return }
+                self.onDiagnosticsKeyDown?()
+            }
+            return noErr
+        }
+#endif
+
+        return OSStatus(eventNotHandledErr)
     }
 
     isolated deinit {
-        unregister()
+#if HIDEOUT_DIAGNOSTICS
+        diagnosticsConfigurationMonitor?.invalidate()
+#endif
+        for eventHotKey in eventHotKeys.values {
+            let status = UnregisterEventHotKey(eventHotKey)
+            if status != noErr {
+                NSLog("GlobalShortcut: failed to unregister shortcut (status: %d)", status)
+            }
+        }
         if let eventHandler {
             let status = RemoveEventHandler(eventHandler)
             if status != noErr {

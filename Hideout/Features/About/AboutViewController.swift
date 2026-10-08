@@ -34,11 +34,16 @@ class AboutViewController: NSViewController {
         subtitle.textColor = .secondaryLabelColor
 
         let version = Bundle.main.releaseVersionNumber.map {
-            "Version \($0) (beta)"
-        } ?? "Beta"
+            "Version \($0)"
+        } ?? "Version unknown"
         let versionLabel = NSTextField(labelWithString: version)
         versionLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         versionLabel.textColor = .labelColor
+
+        let build = Bundle.main.buildVersionNumber ?? "unknown"
+        let buildLabel = NSTextField(labelWithString: "\("Build".localized) \(build)")
+        buildLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        buildLabel.textColor = .secondaryLabelColor
 
         let copyright = NSTextField(labelWithString: "© 2025 Danil Reznichenko")
         copyright.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
@@ -53,6 +58,7 @@ class AboutViewController: NSViewController {
             title,
             subtitle,
             versionLabel,
+            buildLabel,
             copyright,
             license
         ])
@@ -62,7 +68,7 @@ class AboutViewController: NSViewController {
         contentStack.translatesAutoresizingMaskIntoConstraints = false
         contentStack.setCustomSpacing(12, after: icon)
         contentStack.setCustomSpacing(10, after: title)
-        contentStack.setCustomSpacing(14, after: versionLabel)
+        contentStack.setCustomSpacing(14, after: buildLabel)
         contentStack.setCustomSpacing(2, after: copyright)
         view.addSubview(contentStack)
 

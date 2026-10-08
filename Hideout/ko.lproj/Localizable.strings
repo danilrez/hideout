@@ -4,4 +4,6 @@
 "Disable Auto Collapse" = "자동 접기 비활성화";
 "Quit" = "종료";
 "Set Shortcut" = "단축키 설정";
+"Build" = "빌드";
 "Auto-hide after" = "자동으로 숨길 시간:";
+"Open Diagnostics Folder" = "진단 로그 폴더 열기";

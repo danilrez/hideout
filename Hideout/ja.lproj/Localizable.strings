@@ -4,4 +4,6 @@
 "Enable Auto Collapse" = "自動折りたたみオン";
 "Disable Auto Collapse" = "自動折りたたみオフ";
 "Set Shortcut" = "ショットキーを設定";
+"Build" = "ビルド";
 "Auto-hide after" = "自動非表示:";
+"Open Diagnostics Folder" = "診断ログフォルダを開く";

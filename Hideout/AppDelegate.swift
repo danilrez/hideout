@@ -9,8 +9,13 @@ class AppDelegate: NSObject, NSApplicationDelegate{
     lazy var globalShortcutController: GlobalShortcutController = {
         let controller = GlobalShortcutController()
         controller.onKeyDown = { [weak self] in
-            self?.statusBarController.expandCollapseIfNeeded()
+            self?.statusBarController.expandCollapseIfNeeded(trigger: .globalShortcut)
         }
+#if HIDEOUT_DIAGNOSTICS
+        controller.onDiagnosticsKeyDown = {
+            HideoutDiagnostics.openDiagnosticsFolder(source: "globalShortcut")
+        }
+#endif
         return controller
     }()
 
@@ -20,7 +25,29 @@ class AppDelegate: NSObject, NSApplicationDelegate{
         registerDefaultValues()
         setupGlobalShortcut()
         openPreferencesIfNeeded()
+
+#if HIDEOUT_DIAGNOSTICS
+        let info = Bundle.main.infoDictionary ?? [:]
+        HideoutDiagnostics.record("application.didFinishLaunching", fields: [
+            "version": info["CFBundleShortVersionString"] as? String ?? "unknown",
+            "build": info["CFBundleVersion"] as? String ?? "unknown",
+            "macOS": ProcessInfo.processInfo.operatingSystemVersionString,
+            "autoHide": String(Preferences.isAutoHide),
+            "autoHideDelaySeconds": String(Preferences.numberOfSecondForAutoHide),
+            "fullStatusBarOnExpand": String(Preferences.useFullStatusBarOnExpandEnabled),
+            "hoverToExpand": String(Preferences.hoverToExpand),
+            "preferencesWindowOnLaunch": String(Preferences.isShowPreference),
+            "globalShortcutConfigured": String(Preferences.globalKey != nil),
+            "screenCount": String(NSScreen.screens.count)
+        ])
+#endif
     }
+
+#if HIDEOUT_DIAGNOSTICS
+    func applicationWillTerminate(_ notification: Notification) {
+        HideoutDiagnostics.record("application.willTerminate")
+    }
+#endif
 
     @IBAction func showAboutWindow(_ sender: Any?) {
         Util.showAboutWindow()
@@ -48,13 +75,17 @@ class AppDelegate: NSObject, NSApplicationDelegate{
             UserDefaults.Key.numberOfSecondForAutoHide: 10.0
          ])
     }
-    
+
     func setupGlobalShortcut() {
-        guard let globalKey = Preferences.globalKey else {return}
-        globalShortcutController.register(
-            keyCode: globalKey.keyCode,
-            modifiers: globalKey.carbonFlags
-        )
+#if HIDEOUT_DIAGNOSTICS
+        _ = globalShortcutController
+#endif
+        if let globalKey = Preferences.globalKey {
+            globalShortcutController.register(
+                keyCode: globalKey.keyCode,
+                modifiers: globalKey.carbonFlags
+            )
+        }
     }
     
     func detectLTRLang() {

@@ -4,4 +4,6 @@
 "Disable Auto Collapse" = "关闭自动折叠";
 "Quit" = "退出";
 "Set Shortcut" = "设置快捷键";
+"Build" = "构建版本";
 "Auto-hide after" = "自动隐藏：";
+"Open Diagnostics Folder" = "打开诊断日志文件夹";
