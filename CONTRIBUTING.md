@@ -41,7 +41,7 @@ xcodebuild test -project Hideout.xcodeproj \
   CODE_SIGNING_ALLOWED=NO
 ```
 
-Behavior changes also need a check in the real menu bar. For UI changes, verify collapse and expand, auto-hide, the global shortcut, login-item registration, and multiple displays on macOS 27. If a change affects hover-to-expand or status-item order, check those paths too. Lint localized strings with:
+Behavior changes also need a check in the real menu bar. For UI changes, verify collapse and expand, auto-hide, the global shortcut, login-item registration, and multiple displays on macOS 27. When testing layout recovery, make native microphone, camera, and screen-sharing indicators appear and disappear during a call. Confirm the chevron stays reachable or Hideout expands and keeps auto-hide paused until you collapse it manually. If a change affects hover-to-expand or status-item order, check those paths too. Lint localized strings with:
 
 ```sh
 find Hideout -name '*.strings' -print0 | xargs -0 plutil -lint

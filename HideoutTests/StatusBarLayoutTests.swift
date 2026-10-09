@@ -116,6 +116,42 @@ final class StatusBarLayoutTests: XCTestCase {
         )
     }
 
+    func testCollapsedChevronDriftIsDetectedBeforeItCrossesAnchor() {
+        let referenceAnchor = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
+        let referenceArrow = CGRect(x: 1388, y: 1138.5, width: 24, height: 22)
+        let currentArrow = CGRect(x: 1374, y: 1138.5, width: 24, height: 22)
+
+        XCTAssertTrue(
+            StatusBarLayout.hasExpectedItemOrder(
+                arrowFrame: currentArrow,
+                anchorFrame: referenceAnchor,
+                isLTR: true
+            )
+        )
+        XCTAssertFalse(
+            StatusBarLayout.hasChevronMaintainedOffsetFromAnchor(
+                arrowFrame: currentArrow,
+                anchorFrame: referenceAnchor,
+                referenceArrowFrame: referenceArrow,
+                referenceAnchorFrame: referenceAnchor
+            )
+        )
+    }
+
+    func testCollapsedChevronPositionAllowsSmallFrameJitter() {
+        let anchor = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
+        let referenceArrow = CGRect(x: 1388, y: 1138.5, width: 24, height: 22)
+
+        XCTAssertTrue(
+            StatusBarLayout.hasChevronMaintainedOffsetFromAnchor(
+                arrowFrame: CGRect(x: 1394, y: 1138.5, width: 24, height: 22),
+                anchorFrame: anchor,
+                referenceArrowFrame: referenceArrow,
+                referenceAnchorFrame: anchor
+            )
+        )
+    }
+
     @MainActor
     func testGlyphFollowsDetectedDirectionAfterButtonExpands() {
         let button = NSView(frame: NSRect(x: 0, y: 0, width: 24, height: 22))
@@ -157,7 +193,7 @@ final class StatusBarLayoutTests: XCTestCase {
 
 #if HIDEOUT_DIAGNOSTICS
     @MainActor
-    func testDiagnosticsRequireConfigJSONWithDebugString() throws {
+    func testDiagnosticsRequireBooleanTrueFlag() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("HideoutDiagnosticsTests-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -170,9 +206,18 @@ final class StatusBarLayoutTests: XCTestCase {
         XCTAssertFalse(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
 
         try Data(#"{"debug":"enabled"}"#.utf8).write(to: configurationURL)
-        XCTAssertTrue(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
+        XCTAssertFalse(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
+
+        try Data(#"{"debug":"true"}"#.utf8).write(to: configurationURL)
+        XCTAssertFalse(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
 
         try Data(#"{"debug":true}"#.utf8).write(to: configurationURL)
+        XCTAssertTrue(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
+
+        try Data(#"{"debug":false}"#.utf8).write(to: configurationURL)
+        XCTAssertFalse(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
+
+        try Data(#"{"debug":1}"#.utf8).write(to: configurationURL)
         XCTAssertFalse(HideoutDiagnostics.configurationFileEnablesDiagnostics(at: configurationURL))
     }
 #endif

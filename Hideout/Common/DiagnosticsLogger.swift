@@ -1,5 +1,6 @@
 #if HIDEOUT_DIAGNOSTICS
 import AppKit
+import CoreFoundation
 import Darwin
 import Foundation
 import OSLog
@@ -21,7 +22,6 @@ enum HideoutDiagnostics {
     private static let sessionID = UUID().uuidString
     private static let maximumFileSize = 2 * 1024 * 1024
     private static let archiveCount = 3
-    private static var hasLoggedConfigurationCheck = false
 
     private static var applicationSupportHideoutDirectoryURL: URL? {
         guard let userHomeDirectory = currentUserHomeDirectory() else {
@@ -68,56 +68,17 @@ enum HideoutDiagnostics {
     }
 
     static func configurationFileEnablesDiagnostics(at url: URL?) -> Bool {
-        guard let url else {
-            logConfigurationCheck("userHomeUnavailable", at: nil)
+        guard
+            let url,
+            let data = try? Data(contentsOf: url),
+            let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
+            let debugValue = object["debug"] as? NSNumber,
+            CFGetTypeID(debugValue) == CFBooleanGetTypeID()
+        else {
             return false
         }
 
-        let data: Data
-        do {
-            data = try Data(contentsOf: url)
-        } catch {
-            let nsError = error as NSError
-            logConfigurationCheck("readFailed.\(nsError.domain).\(nsError.code)", at: url)
-            return false
-        }
-
-        let json: Any
-        do {
-            json = try JSONSerialization.jsonObject(with: data)
-        } catch {
-            logConfigurationCheck("invalidJSON", at: url)
-            return false
-        }
-
-        guard let object = json as? [String: Any] else {
-            logConfigurationCheck("rootNotObject", at: url)
-            return false
-        }
-
-        guard let debugValue = object["debug"] else {
-            logConfigurationCheck("debugKeyMissing", at: url)
-            return false
-        }
-
-        guard debugValue is String else {
-            logConfigurationCheck("debugValueNotString", at: url)
-            return false
-        }
-
-        logConfigurationCheck("enabled", at: url)
-        return true
-    }
-
-    private static func logConfigurationCheck(_ result: String, at url: URL?) {
-        guard !hasLoggedConfigurationCheck else { return }
-        hasLoggedConfigurationCheck = true
-
-        let location = url.map { $0.path.contains("/Containers/") ? "appContainer" : "userHome" }
-            ?? "unresolved"
-        logger.notice(
-            "[HIDEOUT-DIAGNOSTICS] diagnostics.configurationCheck result=\(result, privacy: .public) location=\(location, privacy: .public)"
-        )
+        return debugValue.boolValue
     }
 
     private static var diagnosticsDirectoryURL: URL? {

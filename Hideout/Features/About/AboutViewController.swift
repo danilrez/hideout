@@ -45,7 +45,7 @@ class AboutViewController: NSViewController {
         buildLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         buildLabel.textColor = .secondaryLabelColor
 
-        let copyright = NSTextField(labelWithString: "© 2025 Danil Reznichenko")
+        let copyright = NSTextField(labelWithString: "© 2026 Danil Reznichenko")
         copyright.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
         copyright.textColor = .secondaryLabelColor
 
