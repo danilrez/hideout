@@ -4,6 +4,10 @@ All notable changes to Hideout are documented here.
 
 ## [0.2.3]
 
+### Changed
+
+- Redesigned the About window with the app icon, product description, version and build details, and a linked license.
+
 ### Fixed
 
 - Added recovery when macOS call indicators or other menu bar changes move the chevron out of its expected position while collapsed. Hideout expands the managed menu bar and pauses automatic hiding until you collapse it manually.

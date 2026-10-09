@@ -41,6 +41,7 @@
 		A10000000000000000000004 /* ExpandCollapseActionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000004 /* ExpandCollapseActionTests.swift */; };
 		A10000000000000000000005 /* StatusBarLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000005 /* StatusBarLayoutTests.swift */; };
 		A10000000000000000000006 /* AutoStartTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* AutoStartTests.swift */; };
+		A10000000000000000000008 /* AboutViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000007 /* AboutViewControllerTests.swift */; };
 		A10000000000000000000007 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = D10000000000000000000001 /* XCTest.framework */; };
 /* End PBXBuildFile section */
 
@@ -113,6 +114,7 @@
 		B10000000000000000000004 /* ExpandCollapseActionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandCollapseActionTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000005 /* StatusBarLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBarLayoutTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000006 /* AutoStartTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoStartTests.swift; sourceTree = "<group>"; };
+		B10000000000000000000007 /* AboutViewControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutViewControllerTests.swift; sourceTree = "<group>"; };
 		B10000000000000000000011 /* HideoutTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HideoutTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D10000000000000000000001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		D20000000000000000000002 /* DiagnosticsLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsLogger.swift; sourceTree = "<group>"; };
@@ -276,6 +278,7 @@
 				B10000000000000000000004 /* ExpandCollapseActionTests.swift */,
 				B10000000000000000000005 /* StatusBarLayoutTests.swift */,
 				B10000000000000000000006 /* AutoStartTests.swift */,
+				B10000000000000000000007 /* AboutViewControllerTests.swift */,
 			);
 			path = HideoutTests;
 			sourceTree = "<group>";
@@ -434,6 +437,7 @@
 				A10000000000000000000004 /* ExpandCollapseActionTests.swift in Sources */,
 				A10000000000000000000005 /* StatusBarLayoutTests.swift in Sources */,
 				A10000000000000000000006 /* AutoStartTests.swift in Sources */,
+				A10000000000000000000008 /* AboutViewControllerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
