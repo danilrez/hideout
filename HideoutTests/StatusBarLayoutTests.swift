@@ -152,6 +152,150 @@ final class StatusBarLayoutTests: XCTestCase {
         )
     }
 
+    func testCollapsedLayoutWatchdogAcceptsStableChevronFrames() {
+        var watchdog = StatusBarLayoutWatchdog()
+        watchdog.setReferenceFrames(referenceFrames)
+
+        XCTAssertNil(watchdog.failureReason(for: healthyObservation, isLTR: true))
+        XCTAssertFalse(watchdog.requiresManualCollapse)
+        XCTAssertTrue(watchdog.shouldScheduleAutoHide)
+    }
+
+    func testCollapsedLayoutWatchdogRequestsRecoveryForInvalidLayouts() {
+        let cases: [(StatusBarLayoutWatchdog.Observation, StatusBarLayoutWatchdog.FailureReason)] = [
+            (observation(chevronItemVisible: false), .chevronItemHidden),
+            (observation(buttonExists: false), .chevronButtonMissing),
+            (observation(buttonHidden: true), .chevronButtonHidden),
+            (observation(windowVisible: false), .chevronWindowHidden),
+            (observation(arrowFrame: nil), .chevronFrameUnavailable),
+            (observation(arrowFrame: CGRect(x: 1340, y: 1138.5, width: 24, height: 22)), .chevronMovedAcrossAnchor),
+            (observation(arrowFrame: CGRect(x: 1374, y: 1138.5, width: 24, height: 22)), .chevronShiftedDuringCollapse)
+        ]
+
+        for (observation, expectedReason) in cases {
+            var watchdog = StatusBarLayoutWatchdog()
+            watchdog.setReferenceFrames(referenceFrames)
+
+            XCTAssertEqual(
+                watchdog.failureReason(for: observation, isLTR: true),
+                expectedReason,
+                "Unexpected recovery reason for \(expectedReason.rawValue)"
+            )
+            XCTAssertTrue(watchdog.requiresManualCollapse)
+            XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+            XCTAssertNil(watchdog.failureReason(for: healthyObservation, isLTR: true))
+            XCTAssertTrue(watchdog.requiresManualCollapse)
+            XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+        }
+    }
+
+    func testCollapsedLayoutWatchdogRequiresASettledReferenceFrame() {
+        var watchdog = StatusBarLayoutWatchdog()
+
+        XCTAssertEqual(
+            watchdog.failureReason(for: healthyObservation, isLTR: true),
+            .chevronReferenceUnavailable
+        )
+        XCTAssertTrue(watchdog.requiresManualCollapse)
+        XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+    }
+
+    func testExpandedLayoutStopsMonitoringWithoutClearingRecoveryGate() {
+        var watchdog = StatusBarLayoutWatchdog()
+        watchdog.setReferenceFrames(referenceFrames)
+        watchdog.requireManualCollapse()
+
+        XCTAssertNil(
+            watchdog.failureReason(for: observation(isCollapsed: false), isLTR: true)
+        )
+        XCTAssertNil(watchdog.referenceFrames)
+        XCTAssertTrue(watchdog.requiresManualCollapse)
+        XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+    }
+
+    func testExplicitUserCollapseTriggersClearRecoveryGate() {
+        for trigger in [StatusBarTransitionTrigger.menuBarButton, .globalShortcut] {
+            var watchdog = StatusBarLayoutWatchdog()
+            watchdog.requireManualCollapse()
+
+            watchdog.noteCollapseAttempt(trigger: trigger)
+
+            XCTAssertFalse(watchdog.requiresManualCollapse, "\(trigger) should clear the recovery gate")
+            XCTAssertTrue(watchdog.shouldScheduleAutoHide)
+        }
+    }
+
+    func testAutomaticAndRecoveryCollapseTriggersKeepRecoveryGateClosed() {
+        for trigger in [StatusBarTransitionTrigger.launch, .autoHide, .hover, .layoutRecovery] {
+            var watchdog = StatusBarLayoutWatchdog()
+            watchdog.requireManualCollapse()
+
+            watchdog.noteCollapseAttempt(trigger: trigger)
+
+            XCTAssertTrue(watchdog.requiresManualCollapse, "\(trigger) must not clear the recovery gate")
+            XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+        }
+    }
+
+    func testCollapsedLayoutWatchdogUsesMirroredOrderForRTL() {
+        var watchdog = StatusBarLayoutWatchdog()
+        watchdog.setReferenceFrames(
+            StatusBarLayoutWatchdog.Frames(
+                arrow: CGRect(x: 1312, y: 1138.5, width: 24, height: 22),
+                anchor: referenceFrames.anchor
+            )
+        )
+
+        XCTAssertNil(
+            watchdog.failureReason(
+                for: observation(
+                    arrowFrame: CGRect(x: 1312, y: 1138.5, width: 24, height: 22)
+                ),
+                isLTR: false
+            )
+        )
+        XCTAssertEqual(
+            watchdog.failureReason(
+                for: observation(
+                    arrowFrame: CGRect(x: 1360, y: 1138.5, width: 24, height: 22)
+                ),
+                isLTR: false
+            ),
+            .chevronMovedAcrossAnchor
+        )
+    }
+
+    private var referenceFrames: StatusBarLayoutWatchdog.Frames {
+        StatusBarLayoutWatchdog.Frames(
+            arrow: CGRect(x: 1388, y: 1138.5, width: 24, height: 22),
+            anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
+        )
+    }
+
+    private var healthyObservation: StatusBarLayoutWatchdog.Observation {
+        observation()
+    }
+
+    private func observation(
+        isCollapsed: Bool = true,
+        chevronItemVisible: Bool = true,
+        buttonExists: Bool = true,
+        buttonHidden: Bool = false,
+        windowVisible: Bool = true,
+        arrowFrame: CGRect? = CGRect(x: 1388, y: 1138.5, width: 24, height: 22),
+        anchorFrame: CGRect? = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
+    ) -> StatusBarLayoutWatchdog.Observation {
+        StatusBarLayoutWatchdog.Observation(
+            isCollapsed: isCollapsed,
+            chevronItemVisible: chevronItemVisible,
+            buttonExists: buttonExists,
+            buttonHidden: buttonHidden,
+            windowVisible: windowVisible,
+            arrowFrame: arrowFrame,
+            anchorFrame: anchorFrame
+        )
+    }
+
     @MainActor
     func testGlyphFollowsDetectedDirectionAfterButtonExpands() {
         let button = NSView(frame: NSRect(x: 0, y: 0, width: 24, height: 22))

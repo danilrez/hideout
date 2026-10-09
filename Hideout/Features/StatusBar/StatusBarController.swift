@@ -27,6 +27,15 @@ enum StatusBarTransitionTrigger: String {
     case autoHide
     case hover
     case layoutRecovery
+
+    var clearsLayoutRecoveryGate: Bool {
+        switch self {
+        case .menuBarButton, .globalShortcut:
+            return true
+        case .launch, .autoHide, .hover, .layoutRecovery:
+            return false
+        }
+    }
 }
 
 enum StatusBarLayout {
@@ -75,6 +84,115 @@ enum StatusBarLayout {
             return arrowFrame.minX >= anchorFrame.maxX
         }
         return arrowFrame.maxX <= anchorFrame.minX
+    }
+}
+
+struct StatusBarLayoutWatchdog {
+    enum FailureReason: String, Equatable {
+        case chevronItemHidden
+        case chevronButtonMissing
+        case chevronButtonHidden
+        case chevronWindowHidden
+        case chevronFrameUnavailable
+        case chevronMovedAcrossAnchor
+        case chevronShiftedDuringCollapse
+        case chevronReferenceUnavailable
+    }
+
+    struct Frames: Equatable {
+        let arrow: CGRect
+        let anchor: CGRect
+    }
+
+    struct Observation {
+        let isCollapsed: Bool
+        let chevronItemVisible: Bool
+        let buttonExists: Bool
+        let buttonHidden: Bool
+        let windowVisible: Bool
+        let arrowFrame: CGRect?
+        let anchorFrame: CGRect?
+    }
+
+    private(set) var referenceFrames: Frames?
+    private(set) var requiresManualCollapse = false
+
+    var shouldScheduleAutoHide: Bool {
+        !requiresManualCollapse
+    }
+
+    mutating func setReferenceFrames(_ frames: Frames?) {
+        referenceFrames = frames
+    }
+
+    mutating func stopMonitoring() {
+        referenceFrames = nil
+    }
+
+    mutating func requireManualCollapse() {
+        requiresManualCollapse = true
+    }
+
+    mutating func noteCollapseAttempt(trigger: StatusBarTransitionTrigger) {
+        if trigger.clearsLayoutRecoveryGate {
+            requiresManualCollapse = false
+        }
+    }
+
+    mutating func failureReason(
+        for observation: Observation,
+        isLTR: Bool
+    ) -> FailureReason? {
+        guard observation.isCollapsed else {
+            referenceFrames = nil
+            return nil
+        }
+
+        let currentFrames: Frames?
+        if let arrowFrame = observation.arrowFrame,
+           let anchorFrame = observation.anchorFrame {
+            currentFrames = Frames(arrow: arrowFrame, anchor: anchorFrame)
+        } else {
+            currentFrames = nil
+        }
+
+        let reason: FailureReason?
+        if !observation.chevronItemVisible {
+            reason = .chevronItemHidden
+        } else if !observation.buttonExists {
+            reason = .chevronButtonMissing
+        } else if observation.buttonHidden {
+            reason = .chevronButtonHidden
+        } else if !observation.windowVisible {
+            reason = .chevronWindowHidden
+        } else if currentFrames == nil {
+            reason = .chevronFrameUnavailable
+        } else if let currentFrames,
+                  !StatusBarLayout.hasExpectedItemOrder(
+                    arrowFrame: currentFrames.arrow,
+                    anchorFrame: currentFrames.anchor,
+                    isLTR: isLTR
+                  ) {
+            reason = .chevronMovedAcrossAnchor
+        } else if let currentFrames,
+                  let referenceFrames,
+                  !StatusBarLayout.hasChevronMaintainedOffsetFromAnchor(
+                    arrowFrame: currentFrames.arrow,
+                    anchorFrame: currentFrames.anchor,
+                    referenceArrowFrame: referenceFrames.arrow,
+                    referenceAnchorFrame: referenceFrames.anchor
+                  ) {
+            reason = .chevronShiftedDuringCollapse
+        } else if referenceFrames == nil {
+            reason = .chevronReferenceUnavailable
+        } else {
+            reason = nil
+        }
+
+        if reason != nil {
+            requiresManualCollapse = true
+        }
+        return reason
     }
 }
 
@@ -139,9 +257,7 @@ class StatusBarController {
     private var layoutWatchdogTimer: Timer?
     private var layoutWatchdogBaselineTask: Task<Void, Never>?
     private var layoutWatchdogGeneration = 0
-    // Native menu-bar controls can shift the chevron without hiding its status item.
-    private var collapsedChevronReferenceFrames: (arrow: CGRect, anchor: CGRect)?
-    private var layoutRecoveryRequiresManualCollapse = false
+    private var layoutWatchdogPolicy = StatusBarLayoutWatchdog()
     
     //MARK: - BarItems
 
@@ -378,7 +494,7 @@ class StatusBarController {
         guard layoutWatchdogTimer == nil, layoutWatchdogBaselineTask == nil else { return }
         layoutWatchdogGeneration += 1
         let generation = layoutWatchdogGeneration
-        collapsedChevronReferenceFrames = nil
+        layoutWatchdogPolicy.setReferenceFrames(nil)
         recordStatusBarState("statusBar.layoutWatchdog.baselinePending")
         layoutWatchdogBaselineTask = Task { @MainActor [weak self] in
             do {
@@ -398,7 +514,12 @@ class StatusBarController {
                 return
             }
 
-            self.collapsedChevronReferenceFrames = referenceFrames
+            self.layoutWatchdogPolicy.setReferenceFrames(
+                StatusBarLayoutWatchdog.Frames(
+                    arrow: referenceFrames.arrow,
+                    anchor: referenceFrames.anchor
+                )
+            )
             self.recordStatusBarState("statusBar.layoutWatchdog.started", additionalFields: [
                 "referenceChevronOffsetFromAnchor": self.scalar(
                     referenceFrames.arrow.minX - referenceFrames.anchor.minX
@@ -423,7 +544,7 @@ class StatusBarController {
         layoutWatchdogTimer = nil
         layoutWatchdogBaselineTask?.cancel()
         layoutWatchdogBaselineTask = nil
-        collapsedChevronReferenceFrames = nil
+        layoutWatchdogPolicy.stopMonitoring()
     }
 
     private func checkCollapsedLayout() {
@@ -433,57 +554,36 @@ class StatusBarController {
         }
 
         let currentFrames = chevronFramesOnScreen
-        let failureReason: String?
-        if !btnExpandCollapse.isVisible {
-            failureReason = "chevronItemHidden"
-        } else if btnExpandCollapse.button == nil {
-            failureReason = "chevronButtonMissing"
-        } else if btnExpandCollapse.button?.isHidden == true {
-            failureReason = "chevronButtonHidden"
-        } else if btnExpandCollapse.button?.window?.isVisible != true {
-            failureReason = "chevronWindowHidden"
-        } else if currentFrames == nil {
-            failureReason = "chevronFrameUnavailable"
-        } else if let currentFrames,
-                  !StatusBarLayout.hasExpectedItemOrder(
-                    arrowFrame: currentFrames.arrow,
-                    anchorFrame: currentFrames.anchor,
-                    isLTR: Constant.isUsingLTRLanguage
-                  ) {
-            failureReason = "chevronMovedAcrossAnchor"
-        } else if let currentFrames,
-                  let referenceFrames = collapsedChevronReferenceFrames,
-                  !StatusBarLayout.hasChevronMaintainedOffsetFromAnchor(
-                    arrowFrame: currentFrames.arrow,
-                    anchorFrame: currentFrames.anchor,
-                    referenceArrowFrame: referenceFrames.arrow,
-                    referenceAnchorFrame: referenceFrames.anchor
-                  ) {
-            failureReason = "chevronShiftedDuringCollapse"
-        } else if collapsedChevronReferenceFrames == nil {
-            failureReason = "chevronReferenceUnavailable"
-        } else {
-            failureReason = nil
-        }
+        let failureReason = layoutWatchdogPolicy.failureReason(
+            for: StatusBarLayoutWatchdog.Observation(
+                isCollapsed: isCollapsed,
+                chevronItemVisible: btnExpandCollapse.isVisible,
+                buttonExists: btnExpandCollapse.button != nil,
+                buttonHidden: btnExpandCollapse.button?.isHidden == true,
+                windowVisible: btnExpandCollapse.button?.window?.isVisible == true,
+                arrowFrame: currentFrames?.arrow,
+                anchorFrame: currentFrames?.anchor
+            ),
+            isLTR: Constant.isUsingLTRLanguage
+        )
 
         guard let failureReason else {
             return
         }
 
         recordStatusBarState("statusBar.layoutWatchdog.warning", additionalFields: [
-            "reason": failureReason,
-            "referenceChevronOffsetFromAnchor": collapsedChevronReferenceFrames.map {
+            "reason": failureReason.rawValue,
+            "referenceChevronOffsetFromAnchor": layoutWatchdogPolicy.referenceFrames.map {
                 scalar($0.arrow.minX - $0.anchor.minX)
             } ?? "unavailable",
             "currentChevronOffsetFromAnchor": currentFrames.map {
                 scalar($0.arrow.minX - $0.anchor.minX)
             } ?? "unavailable"
         ])
-        layoutRecoveryRequiresManualCollapse = true
         timer?.invalidate()
         timer = nil
         recordStatusBarState("statusBar.layoutRecovery.started", additionalFields: [
-            "reason": failureReason
+            "reason": failureReason.rawValue
         ])
         expandMenubar(trigger: .layoutRecovery, scheduleAutoHide: false)
     }
@@ -511,7 +611,7 @@ class StatusBarController {
         var fields = [
             "collapsed": String(isCollapsed),
             "anchorPositionValid": String(isCollapseAnchorPositionValid),
-            "layoutRecoveryRequiresManualCollapse": String(layoutRecoveryRequiresManualCollapse),
+            "layoutRecoveryRequiresManualCollapse": String(layoutWatchdogPolicy.requiresManualCollapse),
             "collapseUnit": scalar(StatusBarController.collapseUnit),
             "collapsedBoundaryLength": scalar(collapsedBoundaryLength),
             "activeSpacerCount": String(activeSpacerCount),
@@ -815,9 +915,7 @@ class StatusBarController {
         if isCollapsed {
             expandMenubar(trigger: trigger)
         } else {
-            if trigger == .menuBarButton || trigger == .globalShortcut {
-                layoutRecoveryRequiresManualCollapse = false
-            }
+            layoutWatchdogPolicy.noteCollapseAttempt(trigger: trigger)
             collapseMenuBar(trigger: trigger)
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
@@ -870,7 +968,7 @@ class StatusBarController {
                     : (positionValid ? "chevronOverlapsExpandedAnchor" : "anchorPositionInvalid")
             ])
             if geometryInvalid && !alreadyCollapsed {
-                layoutRecoveryRequiresManualCollapse = true
+                layoutWatchdogPolicy.requireManualCollapse()
                 timer?.invalidate()
                 timer = nil
                 recordStatusBarState("statusBar.layoutRecovery.suspended", additionalFields: [
@@ -941,7 +1039,7 @@ class StatusBarController {
     }
     
     private func autoCollapseIfNeeded(reason: String = "requested") {
-        guard !layoutRecoveryRequiresManualCollapse else {
+        guard layoutWatchdogPolicy.shouldScheduleAutoHide else {
             recordStatusBarState("autoHide.timerNotScheduled", additionalFields: [
                 "reason": "layoutRecoveryRequiresManualCollapse"
             ])
