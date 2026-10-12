@@ -8,3 +8,7 @@
 "Version" = "Version";
 "Auto-hide after" = "Auto-hide after:";
 "Open Diagnostics Folder" = "Open Diagnostics Folder";
+"Check for Updates" = "Check for Updates...";
+"Update available: %@" = "Update available: %@";
+"Hideout update available" = "Hideout update available";
+"Version %@ is ready. Select to open the release page and download it." = "Version %@ is ready. Select to open the release page and download it.";

@@ -286,6 +286,12 @@ class StatusBarController {
     private var glyphEdgeConstraint: NSLayoutConstraint?
     private var separatorView: StatusBarSeparatorView?
     private var separatorEdgeConstraint: NSLayoutConstraint?
+    private let updateMenuItem = NSMenuItem(
+        title: "Check for Updates".localized,
+        action: nil,
+        keyEquivalent: ""
+    )
+    private var availableUpdate: AvailableUpdate?
 #if HIDEOUT_DIAGNOSTICS
     private var diagnosticsMenuVisibilityDelegate: DiagnosticsMenuVisibilityDelegate?
 #endif
@@ -1100,6 +1106,10 @@ class StatusBarController {
         )
         aboutItem.target = self
         menu.addItem(aboutItem)
+        updateMenuItem.action = #selector(openUpdatePage)
+        updateMenuItem.target = self
+        updateMenuTitle()
+        menu.addItem(updateMenuItem)
         menu.addItem(NSMenuItem.separator())
 
         let prefItem = NSMenuItem(title: "Settings...".localized, action: #selector(openPreferenceViewControllerIfNeeded), keyEquivalent: ",")
@@ -1133,6 +1143,29 @@ class StatusBarController {
         menu.addItem(NSMenuItem(title: "Quit".localized, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         
         return menu
+    }
+
+    func showUpdateAvailable(_ update: AvailableUpdate) {
+        availableUpdate = update
+        updateMenuTitle()
+    }
+
+    private func updateMenuTitle() {
+        guard let availableUpdate else {
+            updateMenuItem.title = "Check for Updates".localized
+            return
+        }
+
+        updateMenuItem.title = String(
+            format: "Update available: %@".localized,
+            availableUpdate.version.description
+        )
+    }
+
+    @objc private func openUpdatePage() {
+        let releasePage = "https://github.com/danilrez/Hideout/releases"
+        guard let url = availableUpdate?.releaseURL ?? URL(string: releasePage) else { return }
+        NSWorkspace.shared.open(url)
     }
     
     private func updateAutoCollapseMenuTitle() {

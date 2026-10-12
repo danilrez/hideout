@@ -8,3 +8,7 @@
 "Version" = "Verzija";
 "Auto-hide after" = "Auto-skrivanje nakon:";
 "Open Diagnostics Folder" = "Otvori mapu dijagnostike";
+"Check for Updates" = "Provjeri ažuriranja";
+"Update available: %@" = "Dostupno ažuriranje: %@";
+"Hideout update available" = "Dostupno ažuriranje za Hideout";
+"Version %@ is ready. Select to open the release page and download it." = "Verzija %@ je dostupna. Odaberite ovu obavijest za otvaranje stranice izdanja i preuzimanje.";

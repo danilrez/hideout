@@ -9,5 +9,9 @@ extension UserDefaults {
         static let isShowPreference = "isShowPreferences"
         static let useFullStatusBarOnExpandEnabled = "useFullStatusBarOnExpandEnabled"
         static let hoverToExpand = "hoverToExpand"
+        static let lastUpdateCheckDate = "lastUpdateCheckDate"
+        static let lastNotifiedUpdateVersion = "lastNotifiedUpdateVersion"
+        static let availableUpdateVersion = "availableUpdateVersion"
+        static let availableUpdateURL = "availableUpdateURL"
     }
 }

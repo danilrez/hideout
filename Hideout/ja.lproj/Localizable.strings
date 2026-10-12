@@ -8,3 +8,7 @@
 "Version" = "バージョン";
 "Auto-hide after" = "自動非表示:";
 "Open Diagnostics Folder" = "診断ログフォルダを開く";
+"Check for Updates" = "アップデートを確認…";
+"Update available: %@" = "アップデートがあります: %@";
+"Hideout update available" = "Hideoutのアップデートがあります";
+"Version %@ is ready. Select to open the release page and download it." = "バージョン %@ を利用できます。この通知を選択するとリリースページが開き、ダウンロードできます。";

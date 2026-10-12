@@ -8,3 +8,7 @@
 "Version" = "Version";
 "Auto-hide after" = "Auto-Ausblenden nach:";
 "Open Diagnostics Folder" = "Diagnoseordner öffnen";
+"Check for Updates" = "Nach Updates suchen";
+"Update available: %@" = "Update verfügbar: %@";
+"Hideout update available" = "Hideout-Update verfügbar";
+"Version %@ is ready. Select to open the release page and download it." = "Version %@ ist verfügbar. Klicke, um die Release-Seite zu öffnen und das Update herunterzuladen.";

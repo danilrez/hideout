@@ -13,6 +13,7 @@ Hideout keeps your macOS menu bar tidy by moving selected menu bar items into th
 - Hide and reveal menu bar items with the arrow in the menu bar.
 - Reorder items with `⌘`-drag.
 - Configure a global shortcut, automatic hiding delay, login launch, and whether the full menu bar returns when expanding.
+- Check for stable GitHub releases and get notified when an update is available.
 
 ## Requirements
 
@@ -29,8 +30,10 @@ Release DMGs use an ad-hoc signature to seal the application bundle and its reso
 1. Launch Hideout. Its arrow appears in the menu bar. By default, the preferences window opens at launch.
 2. Hold `⌘` and drag menu bar icons past the `>>` control to choose which items Hideout manages.
 3. Click the arrow to collapse or expand the managed items.
-4. Right-click the arrow to open Settings, toggle automatic collapse, or quit Hideout.
+4. Right-click the arrow to check for updates, open Settings, toggle automatic collapse, or quit Hideout.
 5. In Settings, configure the global shortcut, automatic hiding delay, login launch, whether the preferences window opens at launch, and whether the full menu bar returns when expanding.
+
+Hideout checks for updates about once a day. Notifications require macOS permission; the right-click menu also links to GitHub Releases. Updates are downloaded and installed manually from the release DMG.
 
 ## Menu bar changes during a call
 

@@ -5,6 +5,7 @@ import AppKit
 class AppDelegate: NSObject, NSApplicationDelegate{
     
     var statusBarController = StatusBarController()
+    private let updateChecker = UpdateChecker()
 
     lazy var globalShortcutController: GlobalShortcutController = {
         let controller = GlobalShortcutController()
@@ -24,6 +25,9 @@ class AppDelegate: NSObject, NSApplicationDelegate{
         setupAutoStartApp()
         registerDefaultValues()
         setupGlobalShortcut()
+        updateChecker.start { [weak self] update in
+            self?.statusBarController.showUpdateAvailable(update)
+        }
         openPreferencesIfNeeded()
 
 #if HIDEOUT_DIAGNOSTICS

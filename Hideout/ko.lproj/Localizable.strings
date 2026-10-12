@@ -8,3 +8,7 @@
 "Version" = "버전";
 "Auto-hide after" = "자동으로 숨길 시간:";
 "Open Diagnostics Folder" = "진단 로그 폴더 열기";
+"Check for Updates" = "업데이트 확인…";
+"Update available: %@" = "업데이트 사용 가능: %@";
+"Hideout update available" = "Hideout 업데이트 사용 가능";
+"Version %@ is ready. Select to open the release page and download it." = "버전 %@을 사용할 수 있습니다. 이 알림을 선택하면 릴리스 페이지가 열리고 다운로드할 수 있습니다.";

@@ -8,3 +8,7 @@
 "Version" = "Версия";
 "Auto-hide after" = "Автоскрытие через:";
 "Open Diagnostics Folder" = "Открыть папку с диагностикой";
+"Check for Updates" = "Проверить наличие обновлений…";
+"Update available: %@" = "Доступно обновление: %@";
+"Hideout update available" = "Доступно обновление Hideout";
+"Version %@ is ready. Select to open the release page and download it." = "Версия %@ уже доступна. Нажмите, чтобы открыть страницу релиза и скачать её.";

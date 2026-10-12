@@ -8,3 +8,7 @@
 "Version" = "Phiên bản";
 "Auto-hide after" = "Tự ẩn sau:";
 "Open Diagnostics Folder" = "Mở thư mục chẩn đoán";
+"Check for Updates" = "Kiểm tra bản cập nhật…";
+"Update available: %@" = "Có bản cập nhật: %@";
+"Hideout update available" = "Đã có bản cập nhật Hideout";
+"Version %@ is ready. Select to open the release page and download it." = "Đã có phiên bản %@. Chọn thông báo này để mở trang phát hành và tải xuống.";

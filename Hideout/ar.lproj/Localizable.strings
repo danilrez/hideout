@@ -8,3 +8,7 @@
 "Version" = "الإصدار";
 "Auto-hide after" = "إخفاء تلقائي بعد:";
 "Open Diagnostics Folder" = "فتح مجلد التشخيصات";
+"Check for Updates" = "التحقق من وجود تحديثات";
+"Update available: %@" = "يتوفر تحديث: %@";
+"Hideout update available" = "يتوفر تحديث لـ Hideout";
+"Version %@ is ready. Select to open the release page and download it." = "الإصدار %@ جاهز. اختر الإشعار لفتح صفحة الإصدار وتنزيله.";

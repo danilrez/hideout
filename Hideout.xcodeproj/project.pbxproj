@@ -35,6 +35,8 @@
 		967F4B2824169CAF00F18D3C /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 967F4B2A24169CAF00F18D3C /* Localizable.strings */; };
 		C4A1C0DE27000000000001 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = C4A1C0DE27000000000002 /* AppIcon.icon */; };
 		D20000000000000000000001 /* DiagnosticsLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = D20000000000000000000002 /* DiagnosticsLogger.swift */; };
+		D30000000000000000000001 /* UpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000002 /* UpdateChecker.swift */; };
+		D30000000000000000000003 /* UpdateCheckerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D30000000000000000000004 /* UpdateCheckerTests.swift */; };
 		A10000000000000000000001 /* SelectedSecondTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000001 /* SelectedSecondTests.swift */; };
 		A10000000000000000000002 /* GlobalKeybindPreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000002 /* GlobalKeybindPreferencesTests.swift */; };
 		A10000000000000000000003 /* PreferencesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* PreferencesTests.swift */; };
@@ -118,6 +120,8 @@
 		B10000000000000000000011 /* HideoutTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HideoutTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		D10000000000000000000001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		D20000000000000000000002 /* DiagnosticsLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsLogger.swift; sourceTree = "<group>"; };
+		D30000000000000000000002 /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
+		D30000000000000000000004 /* UpdateCheckerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateCheckerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,8 +160,17 @@
 				08C20FDC23AABC440035D978 /* About */,
 				0842CDFE23A9FF7C00D14BD4 /* Preferences */,
 				0842CDFD23A9FF7500D14BD4 /* StatusBar */,
+				D30000000000000000000005 /* Updates */,
 			);
 			path = Features;
+			sourceTree = "<group>";
+		};
+		D30000000000000000000005 /* Updates */ = {
+			isa = PBXGroup;
+			children = (
+				D30000000000000000000002 /* UpdateChecker.swift */,
+			);
+			path = Updates;
 			sourceTree = "<group>";
 		};
 		0842CDFD23A9FF7500D14BD4 /* StatusBar */ = {
@@ -279,6 +292,7 @@
 				B10000000000000000000005 /* StatusBarLayoutTests.swift */,
 				B10000000000000000000006 /* AutoStartTests.swift */,
 				B10000000000000000000007 /* AboutViewControllerTests.swift */,
+				D30000000000000000000004 /* UpdateCheckerTests.swift */,
 			);
 			path = HideoutTests;
 			sourceTree = "<group>";
@@ -424,6 +438,7 @@
 				08C20FE223AB452C0035D978 /* AboutViewController.swift in Sources */,
 				00137CDF24A63DB1004AC855 /* Notification.Name+Extension.swift in Sources */,
 				08A5F86423AA09F300981CA5 /* UserDefault+Extension.swift in Sources */,
+				D30000000000000000000001 /* UpdateChecker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			};
@@ -438,6 +453,7 @@
 				A10000000000000000000005 /* StatusBarLayoutTests.swift in Sources */,
 				A10000000000000000000006 /* AutoStartTests.swift in Sources */,
 				A10000000000000000000008 /* AboutViewControllerTests.swift in Sources */,
+				D30000000000000000000003 /* UpdateCheckerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -613,6 +629,7 @@
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = HIDEOUT_DIAGNOSTICS;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 			};
@@ -624,7 +641,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGNING_ALLOWED = NO;
 				CODE_SIGNING_REQUIRED = NO;
-				CODE_SIGN_ENTITLEMENTS = Hideout/Hideout.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Hideout/HideoutDiagnostics.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -653,7 +670,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				CODE_SIGN_ENTITLEMENTS = Hideout/Hideout.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Hideout/HideoutDiagnostics.entitlements;
 				CODE_SIGN_IDENTITY = "Mac Developer";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;

@@ -8,3 +8,7 @@
 "Version" = "Version";
 "Auto-hide after" = "Masquage auto après :";
 "Open Diagnostics Folder" = "Ouvrir le dossier des diagnostics";
+"Check for Updates" = "Rechercher des mises à jour…";
+"Update available: %@" = "Mise à jour disponible : %@";
+"Hideout update available" = "Mise à jour de Hideout disponible";
+"Version %@ is ready. Select to open the release page and download it." = "La version %@ est disponible. Sélectionnez cette notification pour ouvrir la page de la version et la télécharger.";

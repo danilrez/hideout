@@ -47,17 +47,13 @@ jobs:
           echo "BUILD_VERSION=$build_version" >> "$GITHUB_ENV"
           echo "Building Hideout $tag with build $build_version"
 
-          signing_entitlements="Hideout/Hideout.entitlements"
+          signing_entitlements="Hideout/HideoutDiagnostics.entitlements"
           archive_settings=(
             "CURRENT_PROJECT_VERSION=$build_version"
             CODE_SIGNING_ALLOWED=NO
             CODE_SIGNING_REQUIRED=NO
+            SWIFT_ACTIVE_COMPILATION_CONDITIONS=HIDEOUT_DIAGNOSTICS
           )
-
-          if [[ "$tag_version" == *-* || "$tag_version" == "0.2.2" ]]; then
-            signing_entitlements="Hideout/HideoutDiagnostics.entitlements"
-            archive_settings+=(SWIFT_ACTIVE_COMPILATION_CONDITIONS=HIDEOUT_DIAGNOSTICS)
-          fi
 
           echo "SIGNING_ENTITLEMENTS=$signing_entitlements" >> "$GITHUB_ENV"
 

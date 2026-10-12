@@ -8,3 +8,7 @@
 "Version" = "版本";
 "Auto-hide after" = "自動隱藏：";
 "Open Diagnostics Folder" = "開啟診斷記錄資料夾";
+"Check for Updates" = "檢查更新⋯";
+"Update available: %@" = "有可用更新：%@";
+"Hideout update available" = "Hideout 有可用更新";
+"Version %@ is ready. Select to open the release page and download it." = "版本 %@ 已推出。選取此通知即可開啟版本發布頁面並下載。";
