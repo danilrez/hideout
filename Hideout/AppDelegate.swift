@@ -1,10 +1,29 @@
 import AppKit
 
+@MainActor
+enum AppLaunchBootstrap {
+    static func makeStatusBarController<Controller>(
+        using defaults: UserDefaults = .standard,
+        create: () -> Controller
+    ) -> Controller {
+        defaults.register(defaults: [
+            UserDefaults.Key.isAutoStart: false,
+            UserDefaults.Key.isShowPreference: true,
+            UserDefaults.Key.isAutoHide: true,
+            UserDefaults.Key.numberOfSecondForAutoHide: 10.0
+        ])
+
+        return create()
+    }
+}
+
 @main
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate{
     
-    var statusBarController = StatusBarController()
+    lazy var statusBarController = AppLaunchBootstrap.makeStatusBarController {
+        StatusBarController()
+    }
     private let updateChecker = UpdateChecker()
 
     lazy var globalShortcutController: GlobalShortcutController = {
@@ -23,7 +42,6 @@ class AppDelegate: NSObject, NSApplicationDelegate{
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         detectLTRLang()
         setupAutoStartApp()
-        registerDefaultValues()
         setupGlobalShortcut()
         updateChecker.start { [weak self] update in
             self?.statusBarController.showUpdateAvailable(update)
@@ -71,15 +89,6 @@ class AppDelegate: NSObject, NSApplicationDelegate{
         Util.setUpAutoStart(isAutoStart: Preferences.isAutoStart)
     }
     
-    func registerDefaultValues() {
-         UserDefaults.standard.register(defaults: [
-            UserDefaults.Key.isAutoStart: false,
-            UserDefaults.Key.isShowPreference: true,
-            UserDefaults.Key.isAutoHide: true,
-            UserDefaults.Key.numberOfSecondForAutoHide: 10.0
-         ])
-    }
-
     func setupGlobalShortcut() {
 #if HIDEOUT_DIAGNOSTICS
         _ = globalShortcutController

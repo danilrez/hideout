@@ -38,6 +38,20 @@ final class PreferencesTests: XCTestCase {
         XCTAssertEqual(Preferences.numberOfSecondForAutoHide, 30)
     }
 
+    func testStartupRegistersAutoHideDefaultsBeforeCreatingStatusBarController() {
+        let suiteName = "HideoutPreferencesTests-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+
+        let result = AppLaunchBootstrap.makeStatusBarController(using: defaults) {
+            XCTAssertTrue(defaults.bool(forKey: UserDefaults.Key.isAutoHide))
+            XCTAssertEqual(defaults.double(forKey: UserDefaults.Key.numberOfSecondForAutoHide), 10)
+            return "created"
+        }
+
+        XCTAssertEqual(result, "created")
+    }
+
     func testCenteredWindowOriginUsesTheVisibleScreenFrame() {
         let visibleFrame = NSRect(x: 1920, y: 24, width: 1440, height: 851)
         let windowFrame = NSRect(x: 0, y: 0, width: 720, height: 449)
