@@ -2,6 +2,16 @@
 
 All notable changes to Hideout are documented here.
 
+## [0.2.4]
+
+### Added
+
+- Added notifications when a stable GitHub release is available, with a link to the release page.
+
+### Fixed
+
+- Fixed automatic hiding not starting at launch when the status bar controller initialized before default preferences were registered.
+
 ## [0.2.3]
 
 ### Changed
