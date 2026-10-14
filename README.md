@@ -33,7 +33,7 @@ Release DMGs use an ad-hoc signature to seal the application bundle and its reso
 4. Right-click the arrow to check for updates, open Settings, toggle automatic collapse, or quit Hideout.
 5. In Settings, configure the global shortcut, automatic hiding delay, login launch, whether the preferences window opens at launch, and whether the full menu bar returns when expanding.
 
-Hideout checks for updates about once a day. Notifications require macOS permission; the right-click menu also links to GitHub Releases. Updates are downloaded and installed manually from the release DMG.
+Hideout checks for updates about once a day. Notifications require macOS permission. The right-click menu lets you check manually and opens the GitHub release page when an update is found or the check fails. Updates are downloaded and installed manually from the release DMG.
 
 ## Menu bar changes during a call
 

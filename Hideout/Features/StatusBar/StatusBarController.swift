@@ -237,93 +237,9 @@ private final class StatusBarGlyphView: NSImageView {
 }
 
 @MainActor
-private final class UpdateCheckMenuItemView: NSView {
-    private let titleLabel = NSTextField(labelWithString: "")
-    private let progressIndicator = NSProgressIndicator(frame: .zero)
-    private let activationButton = NSButton(title: "", target: nil, action: nil)
-    private var isHighlighted = false
-    var onActivate: (@MainActor () -> Void)?
-
-    init(title: String, width: CGFloat) {
-        super.init(frame: NSRect(x: 0, y: 0, width: width, height: 24))
-        autoresizingMask = [.width]
-
-        activationButton.isBordered = false
-        activationButton.setButtonType(.momentaryPushIn)
-        activationButton.focusRingType = .none
-        activationButton.target = self
-        activationButton.action = #selector(activateFromButton(_:))
-        activationButton.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(activationButton)
-
-        titleLabel.stringValue = title
-        titleLabel.font = .menuFont(ofSize: 0)
-        titleLabel.lineBreakMode = .byTruncatingTail
-        titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(titleLabel)
-
-        progressIndicator.style = .spinning
-        progressIndicator.controlSize = .small
-        progressIndicator.isIndeterminate = true
-        progressIndicator.isDisplayedWhenStopped = false
-        progressIndicator.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(progressIndicator)
-
-        NSLayoutConstraint.activate([
-            activationButton.leadingAnchor.constraint(equalTo: leadingAnchor),
-            activationButton.trailingAnchor.constraint(equalTo: trailingAnchor),
-            activationButton.topAnchor.constraint(equalTo: topAnchor),
-            activationButton.bottomAnchor.constraint(equalTo: bottomAnchor),
-            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
-            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: progressIndicator.leadingAnchor, constant: -12),
-            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
-            progressIndicator.widthAnchor.constraint(equalToConstant: 16),
-            progressIndicator.heightAnchor.constraint(equalToConstant: 16),
-            progressIndicator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
-            progressIndicator.centerYAnchor.constraint(equalTo: centerYAnchor)
-        ])
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
+private final class StatusBarProgressIndicator: NSProgressIndicator {
     override func hitTest(_ point: NSPoint) -> NSView? {
-        guard let superview else { return nil }
-        let localPoint = convert(point, from: superview)
-        return bounds.contains(localPoint) ? activationButton : nil
-    }
-
-    override func draw(_ dirtyRect: NSRect) {
-        guard isHighlighted else { return }
-        NSColor.controlAccentColor.setFill()
-        NSBezierPath(roundedRect: bounds.insetBy(dx: 4, dy: 1), xRadius: 7, yRadius: 7).fill()
-    }
-
-    func setHighlighted(_ isHighlighted: Bool) {
-        guard self.isHighlighted != isHighlighted else { return }
-        self.isHighlighted = isHighlighted
-        titleLabel.textColor = isHighlighted ? .selectedMenuItemTextColor : .labelColor
-        progressIndicator.appearance = isHighlighted ? NSAppearance(named: .darkAqua) : nil
-        needsDisplay = true
-    }
-
-    func setTitle(_ title: String) {
-        titleLabel.stringValue = title
-        activationButton.setAccessibilityLabel(title)
-    }
-
-    func setChecking(_ isChecking: Bool) {
-        progressIndicator.isHidden = !isChecking
-        if isChecking {
-            progressIndicator.startAnimation(nil)
-        } else {
-            progressIndicator.stopAnimation(nil)
-        }
-    }
-
-    @objc private func activateFromButton(_ sender: NSButton) {
-        onActivate?()
+        nil
     }
 }
 
@@ -336,8 +252,6 @@ private final class StatusBarSeparatorView: NSImageView {
 
 @MainActor
 private final class StatusBarMenuDelegate: NSObject, NSMenuDelegate {
-    weak var updateMenuItem: NSMenuItem?
-    weak var updateCheckMenuItemView: UpdateCheckMenuItemView?
 #if HIDEOUT_DIAGNOSTICS
     weak var diagnosticsItem: NSMenuItem?
 #endif
@@ -348,9 +262,6 @@ private final class StatusBarMenuDelegate: NSObject, NSMenuDelegate {
 #endif
     }
 
-    func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
-        updateCheckMenuItemView?.setHighlighted(item === updateMenuItem)
-    }
 }
 
 @MainActor
@@ -389,7 +300,8 @@ class StatusBarController {
     private var collapsedBoundaryLength: CGFloat = 2000
     private var toggleGlyphView: StatusBarGlyphView?
     private var glyphEdgeConstraint: NSLayoutConstraint?
-    private var updateCheckMenuItemView: UpdateCheckMenuItemView?
+    private let updateCheckProgressIndicator = StatusBarProgressIndicator(frame: .zero)
+    private var updateCheckIndicatorEdgeConstraint: NSLayoutConstraint?
     private var statusBarMenuDelegate: StatusBarMenuDelegate?
     private var separatorView: StatusBarSeparatorView?
     private var separatorEdgeConstraint: NSLayoutConstraint?
@@ -925,6 +837,19 @@ class StatusBarController {
                 glyphView.centerYAnchor.constraint(equalTo: button.centerYAnchor)
             ])
             toggleGlyphView = glyphView
+
+            updateCheckProgressIndicator.style = .spinning
+            updateCheckProgressIndicator.controlSize = .small
+            updateCheckProgressIndicator.isIndeterminate = true
+            updateCheckProgressIndicator.isDisplayedWhenStopped = false
+            updateCheckProgressIndicator.translatesAutoresizingMaskIntoConstraints = false
+            updateCheckProgressIndicator.isHidden = true
+            button.addSubview(updateCheckProgressIndicator)
+            NSLayoutConstraint.activate([
+                updateCheckProgressIndicator.widthAnchor.constraint(equalToConstant: 16),
+                updateCheckProgressIndicator.heightAnchor.constraint(equalToConstant: 16),
+                updateCheckProgressIndicator.centerYAnchor.constraint(equalTo: button.centerYAnchor)
+            ])
             updateGlyphPositionConstraint(inset: glyphInset)
         }
         recordStatusBarState("statusBar.uiConfigured")
@@ -935,6 +860,13 @@ class StatusBarController {
         StatusBarGlyphLayout.updateEdgeConstraint(
             &glyphEdgeConstraint,
             glyphView: toggleGlyphView,
+            button: button,
+            isLTR: Constant.isUsingLTRLanguage,
+            inset: inset
+        )
+        StatusBarGlyphLayout.updateEdgeConstraint(
+            &updateCheckIndicatorEdgeConstraint,
+            glyphView: updateCheckProgressIndicator,
             button: button,
             isLTR: Constant.isUsingLTRLanguage,
             inset: inset
@@ -1205,7 +1137,6 @@ class StatusBarController {
     private func getContextMenu() -> NSMenu {
         let menu = NSMenu()
         let menuDelegate = StatusBarMenuDelegate()
-        menuDelegate.updateMenuItem = updateMenuItem
         statusBarMenuDelegate = menuDelegate
         
         let aboutItem = NSMenuItem(
@@ -1215,9 +1146,9 @@ class StatusBarController {
         )
         aboutItem.target = self
         menu.addItem(aboutItem)
-        updateMenuItem.action = nil
-        updateMenuItem.target = nil
-        updateMenuItem.isEnabled = true
+        updateMenuItem.action = #selector(checkForUpdatesOrOpenReleasePage)
+        updateMenuItem.target = self
+        updateMenuItem.isEnabled = !isCheckingForUpdates
         updateMenuTitle()
         menu.addItem(updateMenuItem)
         menu.addItem(NSMenuItem.separator())
@@ -1250,31 +1181,12 @@ class StatusBarController {
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit".localized, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
 
-        let menuWidth = menu.size.width
-        let titleWidth = (updateMenuItem.title as NSString).size(
-            withAttributes: [.font: NSFont.menuFont(ofSize: 0)]
-        ).width
-        let viewWidth = max(menuWidth - 32, max(titleWidth + 80, 160))
-        let menuItemView = updateCheckMenuItemView ?? UpdateCheckMenuItemView(
-            title: updateMenuItem.title,
-            width: viewWidth
-        )
-        menuItemView.setTitle(updateMenuItem.title)
-        menuItemView.onActivate = { [weak self] in
-            self?.checkForUpdatesOrOpenReleasePage()
-        }
-        menuItemView.setChecking(isCheckingForUpdates)
-        updateCheckMenuItemView = menuItemView
-        menuDelegate.updateCheckMenuItemView = menuItemView
-        updateMenuItem.view = menuItemView
-        
         return menu
     }
 
     func showUpdateAvailable(_ update: AvailableUpdate) {
         availableUpdate = update
         updateMenuTitle()
-        updateCheckMenuItemView?.setTitle(updateMenuItem.title)
     }
 
     private func updateMenuTitle() {
@@ -1287,7 +1199,6 @@ class StatusBarController {
             format: "Update available: %@".localized,
             availableUpdate.version.description
         )
-        updateCheckMenuItemView?.setTitle(updateMenuItem.title)
     }
 
     @objc private func checkForUpdatesOrOpenReleasePage() {
@@ -1327,8 +1238,14 @@ class StatusBarController {
     }
 
     private func setUpdateCheckInProgress(_ isInProgress: Bool) {
-        updateCheckMenuItemView?.setTitle(updateMenuItem.title)
-        updateCheckMenuItemView?.setChecking(isInProgress)
+        updateMenuItem.isEnabled = !isInProgress
+        toggleGlyphView?.isHidden = isInProgress
+        updateCheckProgressIndicator.isHidden = !isInProgress
+        if isInProgress {
+            updateCheckProgressIndicator.startAnimation(nil)
+        } else {
+            updateCheckProgressIndicator.stopAnimation(nil)
+        }
     }
 
     private func openReleasePage() {

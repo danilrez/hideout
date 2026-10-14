@@ -4,9 +4,17 @@ All notable changes to Hideout are documented here.
 
 ## [Unreleased]
 
+## [0.2.5]
+
+### Changed
+
+- Made the update check a native menu item that closes the menu when selected and shows a spinner in place of the Hideout chevron while checking.
+
 ### Fixed
 
 - Avoided layout recovery when menu bar changes move the chevron away from the collapse anchor.
+- Restored keyboard focus when reopening the About window.
+- Accepted GitHub's canonical lowercase release URLs during update checks.
 
 ## [0.2.4]
 
