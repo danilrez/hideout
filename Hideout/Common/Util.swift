@@ -84,6 +84,9 @@ class Util {
         guard let aboutWindow = controller.window else { return }
 
         aboutWindow.bringToFront()
+        if let initialFirstResponder = aboutWindow.initialFirstResponder {
+            _ = aboutWindow.makeFirstResponder(initialFirstResponder)
+        }
         guard let screen = aboutWindow.screen ?? NSScreen.main else { return }
         aboutWindow.setFrameOrigin(
             WindowPlacement.centeredOrigin(

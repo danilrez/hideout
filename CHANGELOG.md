@@ -2,6 +2,12 @@
 
 All notable changes to Hideout are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- Avoided layout recovery when menu bar changes move the chevron away from the collapse anchor.
+
 ## [0.2.4]
 
 ### Added

@@ -50,6 +50,12 @@ struct AvailableUpdate: Sendable {
     let releaseURL: URL
 }
 
+enum UpdateCheckResult: Sendable {
+    case updateAvailable(AvailableUpdate)
+    case upToDate
+    case failed
+}
+
 private struct GitHubRelease: Decodable, Sendable {
     let tagName: String
     let htmlURL: String
@@ -71,6 +77,7 @@ final class UpdateChecker: NSObject {
     private let logger = Logger(subsystem: "com.danilrez.hideout", category: "Updates")
     private var onUpdateAvailable: (@MainActor (AvailableUpdate) -> Void)?
     private var periodicCheckTask: Task<Void, Never>?
+    private var latestReleaseCheckTask: Task<UpdateCheckResult, Never>?
     private var hasStarted = false
 
     func start(onUpdateAvailable: @escaping @MainActor (AvailableUpdate) -> Void) {
@@ -111,7 +118,27 @@ final class UpdateChecker: NSObject {
         }
 
         defaults.set(now, forKey: UserDefaults.Key.lastUpdateCheckDate)
-        Task { await fetchLatestRelease() }
+        Task { _ = await checkLatestReleaseIfNeeded() }
+    }
+
+    func checkForUpdates() async -> UpdateCheckResult {
+        UserDefaults.standard.set(Date(), forKey: UserDefaults.Key.lastUpdateCheckDate)
+        return await checkLatestReleaseIfNeeded()
+    }
+
+    private func checkLatestReleaseIfNeeded() async -> UpdateCheckResult {
+        if let latestReleaseCheckTask {
+            return await latestReleaseCheckTask.value
+        }
+
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return UpdateCheckResult.failed }
+            let result = await self.fetchLatestRelease()
+            self.latestReleaseCheckTask = nil
+            return result
+        }
+        latestReleaseCheckTask = task
+        return await task.value
     }
 
     private func restoreCachedUpdateIfAvailable() {
@@ -137,12 +164,12 @@ final class UpdateChecker: NSObject {
         onUpdateAvailable?(AvailableUpdate(version: cachedVersion, releaseURL: releaseURL))
     }
 
-    private func fetchLatestRelease() async {
+    private func fetchLatestRelease() async -> UpdateCheckResult {
         guard let currentVersionString = Bundle.main.releaseVersionNumber,
               let currentVersion = UpdateVersion(currentVersionString)
         else {
             logger.error("The app version is not a valid three-part version number.")
-            return
+            return .failed
         }
 
         var request = URLRequest(url: Self.latestReleaseURL)
@@ -156,7 +183,7 @@ final class UpdateChecker: NSObject {
             else {
                 let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
                 logger.error("GitHub release check returned HTTP status \(statusCode).")
-                return
+                return .failed
             }
 
             let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
@@ -164,20 +191,24 @@ final class UpdateChecker: NSObject {
                   let releaseURL = Self.trustedReleaseURL(from: release.htmlURL)
             else {
                 logger.error("GitHub returned an invalid release tag or URL.")
-                return
+                return .failed
             }
 
             guard latestVersion > currentVersion else {
                 clearCachedUpdate()
-                return
+                return .upToDate
             }
 
             let update = AvailableUpdate(version: latestVersion, releaseURL: releaseURL)
             cache(update)
             onUpdateAvailable?(update)
-            await deliverNotification(for: update)
+            Task { @MainActor [weak self] in
+                await self?.deliverNotification(for: update)
+            }
+            return .updateAvailable(update)
         } catch {
             logger.error("GitHub release check failed: \(error.localizedDescription, privacy: .private)")
+            return .failed
         }
     }
 
@@ -242,11 +273,12 @@ final class UpdateChecker: NSObject {
         }
     }
 
-    nonisolated private static func trustedReleaseURL(from value: String) -> URL? {
+    nonisolated static func trustedReleaseURL(from value: String) -> URL? {
+        let releasePath = "/danilrez/hideout/releases/tag/"
         guard let components = URLComponents(string: value),
               components.scheme == "https",
               components.host == "github.com",
-              components.path.hasPrefix("/danilrez/Hideout/releases/tag/")
+              components.path.lowercased().hasPrefix(releasePath)
         else {
             return nil
         }

@@ -11,7 +11,7 @@ Keep these local project conventions aligned with the current source and Xcode p
 - No external Swift Package dependencies. Global shortcuts use the native Carbon Event Manager API.
 - Check GitHub's latest stable release no more than once every 24 hours. Compare semantic `MARKETING_VERSION` values, retain a release-page link for menu-bar fallback, and never download or install updates automatically. The app's network-client entitlement is used only for the public GitHub Releases API.
 - Runtime state and UI work belong to `@MainActor`-isolated AppKit code.
-- Validate the chevron's screen-frame order before collapsing and while collapsed. After layout settles, track its position relative to the collapse anchor. If the chevron is hidden, its frame is unavailable, it crosses the anchor, or it shifts substantially from the settled position, keep the menu bar expanded and pause auto-hide until the user manually collapses it again.
+- Validate the chevron's screen-frame order before collapsing and while collapsed. After layout settles, track its position relative to the collapse anchor. If the chevron is hidden, its frame is unavailable, it crosses the anchor, or it shifts substantially toward the anchor, keep the menu bar expanded and pause auto-hide until the user manually collapses it again. Movement away from the anchor does not make the chevron less reachable and should not trigger recovery by itself.
 - The project has one XCTest target, `HideoutTests`.
 - Verify menu bar behavior when a change affects interaction or layout.
 

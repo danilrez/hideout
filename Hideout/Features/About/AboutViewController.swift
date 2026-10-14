@@ -1,13 +1,19 @@
 import AppKit
 
 @MainActor
+private final class AboutContentView: NSVisualEffectView {
+    override var acceptsFirstResponder: Bool { true }
+}
+
+@MainActor
 class AboutViewController: NSViewController {
 
     override func loadView() {
-        let surface = NSVisualEffectView(frame: .zero)
+        let surface = AboutContentView(frame: .zero)
         surface.material = .windowBackground
         surface.blendingMode = .behindWindow
         surface.state = .active
+        surface.focusRingType = .none
         view = surface
     }
 
@@ -151,7 +157,9 @@ final class AboutWindowController: NSWindowController {
         window.title = "About Hideout"
         window.toolbar = nil
         window.contentMinSize = Self.contentSize
-        window.contentViewController = AboutViewController()
+        let contentViewController = AboutViewController()
+        window.contentViewController = contentViewController
+        window.initialFirstResponder = contentViewController.view
         window.setContentSize(Self.contentSize)
         window.center()
     }

@@ -27,4 +27,14 @@ final class UpdateCheckerTests: XCTestCase {
         XCTAssertFalse(first < second)
         XCTAssertFalse(second < first)
     }
+
+    func testAcceptsGitHubCanonicalLowercaseReleaseURL() throws {
+        let url = try XCTUnwrap(
+            UpdateChecker.trustedReleaseURL(
+                from: "https://github.com/danilrez/hideout/releases/tag/v0.2.4"
+            )
+        )
+
+        XCTAssertEqual(url.absoluteString, "https://github.com/danilrez/hideout/releases/tag/v0.2.4")
+    }
 }

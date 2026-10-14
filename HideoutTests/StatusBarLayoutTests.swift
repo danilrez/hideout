@@ -116,7 +116,7 @@ final class StatusBarLayoutTests: XCTestCase {
         )
     }
 
-    func testCollapsedChevronDriftIsDetectedBeforeItCrossesAnchor() {
+    func testCollapsedChevronDriftTowardAnchorIsDetectedBeforeItCrossesAnchor() {
         let referenceAnchor = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
         let referenceArrow = CGRect(x: 1388, y: 1138.5, width: 24, height: 22)
         let currentArrow = CGRect(x: 1374, y: 1138.5, width: 24, height: 22)
@@ -128,12 +128,13 @@ final class StatusBarLayoutTests: XCTestCase {
                 isLTR: true
             )
         )
-        XCTAssertFalse(
-            StatusBarLayout.hasChevronMaintainedOffsetFromAnchor(
+        XCTAssertTrue(
+            StatusBarLayout.hasChevronShiftedTowardAnchorBeyondTolerance(
                 arrowFrame: currentArrow,
                 anchorFrame: referenceAnchor,
                 referenceArrowFrame: referenceArrow,
-                referenceAnchorFrame: referenceAnchor
+                referenceAnchorFrame: referenceAnchor,
+                isLTR: true
             )
         )
     }
@@ -142,12 +143,13 @@ final class StatusBarLayoutTests: XCTestCase {
         let anchor = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
         let referenceArrow = CGRect(x: 1388, y: 1138.5, width: 24, height: 22)
 
-        XCTAssertTrue(
-            StatusBarLayout.hasChevronMaintainedOffsetFromAnchor(
+        XCTAssertFalse(
+            StatusBarLayout.hasChevronShiftedTowardAnchorBeyondTolerance(
                 arrowFrame: CGRect(x: 1394, y: 1138.5, width: 24, height: 22),
                 anchorFrame: anchor,
                 referenceArrowFrame: referenceArrow,
-                referenceAnchorFrame: anchor
+                referenceAnchorFrame: anchor,
+                isLTR: true
             )
         )
     }
@@ -159,6 +161,54 @@ final class StatusBarLayoutTests: XCTestCase {
         XCTAssertNil(watchdog.failureReason(for: healthyObservation, isLTR: true))
         XCTAssertFalse(watchdog.requiresManualCollapse)
         XCTAssertTrue(watchdog.shouldScheduleAutoHide)
+    }
+
+    func testCollapsedLayoutWatchdogAllowsChevronToShiftAwayFromAnchor() {
+        var watchdog = StatusBarLayoutWatchdog()
+        watchdog.setReferenceFrames(
+            StatusBarLayoutWatchdog.Frames(
+                arrow: CGRect(x: 1388, y: 1138.5, width: 24, height: 22),
+                anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
+            )
+        )
+
+        let observation = observation(
+            arrowFrame: CGRect(x: 1386, y: 1138.5, width: 24, height: 22),
+            anchorFrame: CGRect(x: 1326, y: 1138.5, width: 836, height: 22)
+        )
+
+        XCTAssertNil(watchdog.failureReason(for: observation, isLTR: true))
+        XCTAssertFalse(watchdog.requiresManualCollapse)
+        XCTAssertTrue(watchdog.shouldScheduleAutoHide)
+    }
+
+    func testCollapsedLayoutWatchdogMirrorsSafeDriftForRTL() {
+        var watchdog = StatusBarLayoutWatchdog()
+        watchdog.setReferenceFrames(
+            StatusBarLayoutWatchdog.Frames(
+                arrow: CGRect(x: 1316, y: 1138.5, width: 24, height: 22),
+                anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
+            )
+        )
+
+        XCTAssertNil(
+            watchdog.failureReason(
+                for: observation(
+                    arrowFrame: CGRect(x: 1292, y: 1138.5, width: 24, height: 22)
+                ),
+                isLTR: false
+            )
+        )
+
+        XCTAssertEqual(
+            watchdog.failureReason(
+                for: observation(
+                    arrowFrame: CGRect(x: 1330, y: 1138.5, width: 24, height: 22)
+                ),
+                isLTR: false
+            ),
+            .chevronShiftedDuringCollapse
+        )
     }
 
     func testCollapsedLayoutWatchdogRequestsRecoveryForInvalidLayouts() {

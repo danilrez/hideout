@@ -43,6 +43,10 @@ class AppDelegate: NSObject, NSApplicationDelegate{
         detectLTRLang()
         setupAutoStartApp()
         setupGlobalShortcut()
+        statusBarController.onCheckForUpdates = { [weak self] in
+            guard let self else { return .failed }
+            return await self.updateChecker.checkForUpdates()
+        }
         updateChecker.start { [weak self] update in
             self?.statusBarController.showUpdateAvailable(update)
         }

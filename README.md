@@ -37,7 +37,7 @@ Hideout checks for updates about once a day. Notifications require macOS permiss
 
 ## Menu bar changes during a call
 
-macOS can add or rearrange native microphone, camera, or screen-sharing indicators during a call. If a layout change moves the Hideout arrow out of its expected position while items are collapsed, Hideout expands the managed menu bar and pauses automatic hiding. After the indicators settle, click the arrow to collapse the menu bar again.
+macOS can add or rearrange native microphone, camera, or screen-sharing indicators during a call. If a layout change hides the Hideout arrow, makes its position unavailable, moves it across the collapse anchor, or shifts it substantially toward the anchor while items are collapsed, Hideout expands the managed menu bar and pauses automatic hiding. After the indicators settle, click the arrow to collapse the menu bar again.
 
 <p align="center">
   <img src="docs/previews/Settings.png?v=0.2.0" alt="Hideout Settings" width="720">

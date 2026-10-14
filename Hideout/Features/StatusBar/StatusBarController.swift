@@ -61,18 +61,23 @@ enum StatusBarLayout {
         isLTR ? arrowFrame.minX >= anchorFrame.minX : arrowFrame.minX <= anchorFrame.minX
     }
 
-    static func hasChevronMaintainedOffsetFromAnchor(
+    static func hasChevronShiftedTowardAnchorBeyondTolerance(
         arrowFrame: CGRect,
         anchorFrame: CGRect,
         referenceArrowFrame: CGRect,
-        referenceAnchorFrame: CGRect
+        referenceAnchorFrame: CGRect,
+        isLTR: Bool
     ) -> Bool {
         let currentOffset = arrowFrame.minX - anchorFrame.minX
         let referenceOffset = referenceArrowFrame.minX - referenceAnchorFrame.minX
-        // Ignore small frame jitter, but treat movement across half the chevron
-        // button as a meaningful layout change.
+        // Only movement toward the anchor threatens the chevron's ordering.
+        // Other status items can move the anchor away without making the
+        // chevron less reachable.
+        let driftTowardAnchor = isLTR
+            ? referenceOffset - currentOffset
+            : currentOffset - referenceOffset
         let toleratedDrift = max(2, arrowFrame.width / 2)
-        return abs(currentOffset - referenceOffset) <= toleratedDrift
+        return driftTowardAnchor > toleratedDrift
     }
 
     static func isChevronSeparatedFromAnchor(
@@ -176,11 +181,12 @@ struct StatusBarLayoutWatchdog {
             reason = .chevronMovedAcrossAnchor
         } else if let currentFrames,
                   let referenceFrames,
-                  !StatusBarLayout.hasChevronMaintainedOffsetFromAnchor(
+                  StatusBarLayout.hasChevronShiftedTowardAnchorBeyondTolerance(
                     arrowFrame: currentFrames.arrow,
                     anchorFrame: currentFrames.anchor,
                     referenceArrowFrame: referenceFrames.arrow,
-                    referenceAnchorFrame: referenceFrames.anchor
+                    referenceAnchorFrame: referenceFrames.anchor,
+                    isLTR: isLTR
                   ) {
             reason = .chevronShiftedDuringCollapse
         } else if referenceFrames == nil {
@@ -231,22 +237,121 @@ private final class StatusBarGlyphView: NSImageView {
 }
 
 @MainActor
+private final class UpdateCheckMenuItemView: NSView {
+    private let titleLabel = NSTextField(labelWithString: "")
+    private let progressIndicator = NSProgressIndicator(frame: .zero)
+    private let activationButton = NSButton(title: "", target: nil, action: nil)
+    private var isHighlighted = false
+    var onActivate: (@MainActor () -> Void)?
+
+    init(title: String, width: CGFloat) {
+        super.init(frame: NSRect(x: 0, y: 0, width: width, height: 24))
+        autoresizingMask = [.width]
+
+        activationButton.isBordered = false
+        activationButton.setButtonType(.momentaryPushIn)
+        activationButton.focusRingType = .none
+        activationButton.target = self
+        activationButton.action = #selector(activateFromButton(_:))
+        activationButton.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(activationButton)
+
+        titleLabel.stringValue = title
+        titleLabel.font = .menuFont(ofSize: 0)
+        titleLabel.lineBreakMode = .byTruncatingTail
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(titleLabel)
+
+        progressIndicator.style = .spinning
+        progressIndicator.controlSize = .small
+        progressIndicator.isIndeterminate = true
+        progressIndicator.isDisplayedWhenStopped = false
+        progressIndicator.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(progressIndicator)
+
+        NSLayoutConstraint.activate([
+            activationButton.leadingAnchor.constraint(equalTo: leadingAnchor),
+            activationButton.trailingAnchor.constraint(equalTo: trailingAnchor),
+            activationButton.topAnchor.constraint(equalTo: topAnchor),
+            activationButton.bottomAnchor.constraint(equalTo: bottomAnchor),
+            titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
+            titleLabel.trailingAnchor.constraint(lessThanOrEqualTo: progressIndicator.leadingAnchor, constant: -12),
+            titleLabel.centerYAnchor.constraint(equalTo: centerYAnchor),
+            progressIndicator.widthAnchor.constraint(equalToConstant: 16),
+            progressIndicator.heightAnchor.constraint(equalToConstant: 16),
+            progressIndicator.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -16),
+            progressIndicator.centerYAnchor.constraint(equalTo: centerYAnchor)
+        ])
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        guard let superview else { return nil }
+        let localPoint = convert(point, from: superview)
+        return bounds.contains(localPoint) ? activationButton : nil
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        guard isHighlighted else { return }
+        NSColor.controlAccentColor.setFill()
+        NSBezierPath(roundedRect: bounds.insetBy(dx: 4, dy: 1), xRadius: 7, yRadius: 7).fill()
+    }
+
+    func setHighlighted(_ isHighlighted: Bool) {
+        guard self.isHighlighted != isHighlighted else { return }
+        self.isHighlighted = isHighlighted
+        titleLabel.textColor = isHighlighted ? .selectedMenuItemTextColor : .labelColor
+        progressIndicator.appearance = isHighlighted ? NSAppearance(named: .darkAqua) : nil
+        needsDisplay = true
+    }
+
+    func setTitle(_ title: String) {
+        titleLabel.stringValue = title
+        activationButton.setAccessibilityLabel(title)
+    }
+
+    func setChecking(_ isChecking: Bool) {
+        progressIndicator.isHidden = !isChecking
+        if isChecking {
+            progressIndicator.startAnimation(nil)
+        } else {
+            progressIndicator.stopAnimation(nil)
+        }
+    }
+
+    @objc private func activateFromButton(_ sender: NSButton) {
+        onActivate?()
+    }
+}
+
+@MainActor
 private final class StatusBarSeparatorView: NSImageView {
     override func hitTest(_ point: NSPoint) -> NSView? {
         nil
     }
 }
 
-#if HIDEOUT_DIAGNOSTICS
 @MainActor
-private final class DiagnosticsMenuVisibilityDelegate: NSObject, NSMenuDelegate {
+private final class StatusBarMenuDelegate: NSObject, NSMenuDelegate {
+    weak var updateMenuItem: NSMenuItem?
+    weak var updateCheckMenuItemView: UpdateCheckMenuItemView?
+#if HIDEOUT_DIAGNOSTICS
     weak var diagnosticsItem: NSMenuItem?
+#endif
 
     func menuNeedsUpdate(_ menu: NSMenu) {
+#if HIDEOUT_DIAGNOSTICS
         diagnosticsItem?.isHidden = !HideoutDiagnostics.isEnabled
+#endif
+    }
+
+    func menu(_ menu: NSMenu, willHighlight item: NSMenuItem?) {
+        updateCheckMenuItemView?.setHighlighted(item === updateMenuItem)
     }
 }
-#endif
 
 @MainActor
 class StatusBarController {
@@ -284,6 +389,8 @@ class StatusBarController {
     private var collapsedBoundaryLength: CGFloat = 2000
     private var toggleGlyphView: StatusBarGlyphView?
     private var glyphEdgeConstraint: NSLayoutConstraint?
+    private var updateCheckMenuItemView: UpdateCheckMenuItemView?
+    private var statusBarMenuDelegate: StatusBarMenuDelegate?
     private var separatorView: StatusBarSeparatorView?
     private var separatorEdgeConstraint: NSLayoutConstraint?
     private let updateMenuItem = NSMenuItem(
@@ -292,9 +399,8 @@ class StatusBarController {
         keyEquivalent: ""
     )
     private var availableUpdate: AvailableUpdate?
-#if HIDEOUT_DIAGNOSTICS
-    private var diagnosticsMenuVisibilityDelegate: DiagnosticsMenuVisibilityDelegate?
-#endif
+    private var isCheckingForUpdates = false
+    var onCheckForUpdates: (@MainActor () async -> UpdateCheckResult)?
     
     private var isCollapsed: Bool {
         // Compare with > rather than == so the state survives updateCollapsedLengths
@@ -1098,6 +1204,9 @@ class StatusBarController {
     
     private func getContextMenu() -> NSMenu {
         let menu = NSMenu()
+        let menuDelegate = StatusBarMenuDelegate()
+        menuDelegate.updateMenuItem = updateMenuItem
+        statusBarMenuDelegate = menuDelegate
         
         let aboutItem = NSMenuItem(
             title: "About Hideout".localized,
@@ -1106,8 +1215,9 @@ class StatusBarController {
         )
         aboutItem.target = self
         menu.addItem(aboutItem)
-        updateMenuItem.action = #selector(openUpdatePage)
-        updateMenuItem.target = self
+        updateMenuItem.action = nil
+        updateMenuItem.target = nil
+        updateMenuItem.isEnabled = true
         updateMenuTitle()
         menu.addItem(updateMenuItem)
         menu.addItem(NSMenuItem.separator())
@@ -1127,11 +1237,9 @@ class StatusBarController {
         diagnosticsItem.isHidden = !HideoutDiagnostics.isEnabled
         diagnosticsItem.target = self
         menu.addItem(diagnosticsItem)
-        let diagnosticsMenuDelegate = DiagnosticsMenuVisibilityDelegate()
-        diagnosticsMenuDelegate.diagnosticsItem = diagnosticsItem
-        diagnosticsMenuVisibilityDelegate = diagnosticsMenuDelegate
-        menu.delegate = diagnosticsMenuDelegate
+        menuDelegate.diagnosticsItem = diagnosticsItem
 #endif
+        menu.delegate = menuDelegate
         
         let toggleAutoHideItem = NSMenuItem(title: "Toggle Auto Collapse".localized, action: #selector(toggleAutoHide), keyEquivalent: "t")
         toggleAutoHideItem.target = self
@@ -1141,6 +1249,24 @@ class StatusBarController {
 
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit".localized, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+
+        let menuWidth = menu.size.width
+        let titleWidth = (updateMenuItem.title as NSString).size(
+            withAttributes: [.font: NSFont.menuFont(ofSize: 0)]
+        ).width
+        let viewWidth = max(menuWidth - 32, max(titleWidth + 80, 160))
+        let menuItemView = updateCheckMenuItemView ?? UpdateCheckMenuItemView(
+            title: updateMenuItem.title,
+            width: viewWidth
+        )
+        menuItemView.setTitle(updateMenuItem.title)
+        menuItemView.onActivate = { [weak self] in
+            self?.checkForUpdatesOrOpenReleasePage()
+        }
+        menuItemView.setChecking(isCheckingForUpdates)
+        updateCheckMenuItemView = menuItemView
+        menuDelegate.updateCheckMenuItemView = menuItemView
+        updateMenuItem.view = menuItemView
         
         return menu
     }
@@ -1148,6 +1274,7 @@ class StatusBarController {
     func showUpdateAvailable(_ update: AvailableUpdate) {
         availableUpdate = update
         updateMenuTitle()
+        updateCheckMenuItemView?.setTitle(updateMenuItem.title)
     }
 
     private func updateMenuTitle() {
@@ -1160,11 +1287,52 @@ class StatusBarController {
             format: "Update available: %@".localized,
             availableUpdate.version.description
         )
+        updateCheckMenuItemView?.setTitle(updateMenuItem.title)
     }
 
-    @objc private func openUpdatePage() {
-        let releasePage = "https://github.com/danilrez/Hideout/releases"
-        guard let url = availableUpdate?.releaseURL ?? URL(string: releasePage) else { return }
+    @objc private func checkForUpdatesOrOpenReleasePage() {
+        guard !isCheckingForUpdates else { return }
+
+        if let availableUpdate {
+            NSWorkspace.shared.open(availableUpdate.releaseURL)
+            return
+        }
+
+        guard let onCheckForUpdates else {
+            openReleasePage()
+            return
+        }
+
+        isCheckingForUpdates = true
+        setUpdateCheckInProgress(true)
+        let checkForUpdates = onCheckForUpdates
+
+        Task { @MainActor [weak self] in
+            let result = await checkForUpdates()
+            guard let self else { return }
+
+            self.isCheckingForUpdates = false
+            self.setUpdateCheckInProgress(false)
+
+            switch result {
+            case .updateAvailable(let update):
+                self.showUpdateAvailable(update)
+                NSWorkspace.shared.open(update.releaseURL)
+            case .upToDate:
+                break
+            case .failed:
+                self.openReleasePage()
+            }
+        }
+    }
+
+    private func setUpdateCheckInProgress(_ isInProgress: Bool) {
+        updateCheckMenuItemView?.setTitle(updateMenuItem.title)
+        updateCheckMenuItemView?.setChecking(isInProgress)
+    }
+
+    private func openReleasePage() {
+        guard let url = URL(string: "https://github.com/danilrez/Hideout/releases") else { return }
         NSWorkspace.shared.open(url)
     }
     
