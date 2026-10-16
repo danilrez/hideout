@@ -173,7 +173,7 @@ struct StatusBarLayoutWatchdog {
         } else if currentFrames == nil {
             reason = .chevronFrameUnavailable
         } else if let currentFrames,
-                  !StatusBarLayout.hasExpectedItemOrder(
+                  !StatusBarLayout.isChevronSeparatedFromAnchor(
                     arrowFrame: currentFrames.arrow,
                     anchorFrame: currentFrames.anchor,
                     isLTR: isLTR

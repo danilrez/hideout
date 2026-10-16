@@ -4,6 +4,12 @@ All notable changes to Hideout are documented here.
 
 ## [Unreleased]
 
+## [0.2.6]
+
+### Fixed
+
+- Recover when the chevron overlaps the collapse anchor, restoring menu bar items and pausing automatic hiding until the user collapses them again.
+
 ## [0.2.5]
 
 ### Changed

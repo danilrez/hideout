@@ -118,8 +118,8 @@ final class StatusBarLayoutTests: XCTestCase {
 
     func testCollapsedChevronDriftTowardAnchorIsDetectedBeforeItCrossesAnchor() {
         let referenceAnchor = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
-        let referenceArrow = CGRect(x: 1388, y: 1138.5, width: 24, height: 22)
-        let currentArrow = CGRect(x: 1374, y: 1138.5, width: 24, height: 22)
+        let referenceArrow = CGRect(x: 2220, y: 1138.5, width: 24, height: 22)
+        let currentArrow = CGRect(x: 2202, y: 1138.5, width: 24, height: 22)
 
         XCTAssertTrue(
             StatusBarLayout.hasExpectedItemOrder(
@@ -141,11 +141,11 @@ final class StatusBarLayoutTests: XCTestCase {
 
     func testCollapsedChevronPositionAllowsSmallFrameJitter() {
         let anchor = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
-        let referenceArrow = CGRect(x: 1388, y: 1138.5, width: 24, height: 22)
+        let referenceArrow = CGRect(x: 2220, y: 1138.5, width: 24, height: 22)
 
         XCTAssertFalse(
             StatusBarLayout.hasChevronShiftedTowardAnchorBeyondTolerance(
-                arrowFrame: CGRect(x: 1394, y: 1138.5, width: 24, height: 22),
+                arrowFrame: CGRect(x: 2226, y: 1138.5, width: 24, height: 22),
                 anchorFrame: anchor,
                 referenceArrowFrame: referenceArrow,
                 referenceAnchorFrame: anchor,
@@ -167,13 +167,13 @@ final class StatusBarLayoutTests: XCTestCase {
         var watchdog = StatusBarLayoutWatchdog()
         watchdog.setReferenceFrames(
             StatusBarLayoutWatchdog.Frames(
-                arrow: CGRect(x: 1388, y: 1138.5, width: 24, height: 22),
+                arrow: CGRect(x: 2220, y: 1138.5, width: 24, height: 22),
                 anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
             )
         )
 
         let observation = observation(
-            arrowFrame: CGRect(x: 1386, y: 1138.5, width: 24, height: 22),
+            arrowFrame: CGRect(x: 2222, y: 1138.5, width: 24, height: 22),
             anchorFrame: CGRect(x: 1326, y: 1138.5, width: 836, height: 22)
         )
 
@@ -186,7 +186,7 @@ final class StatusBarLayoutTests: XCTestCase {
         var watchdog = StatusBarLayoutWatchdog()
         watchdog.setReferenceFrames(
             StatusBarLayoutWatchdog.Frames(
-                arrow: CGRect(x: 1316, y: 1138.5, width: 24, height: 22),
+                arrow: CGRect(x: 1300, y: 1138.5, width: 24, height: 22),
                 anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
             )
         )
@@ -203,7 +203,7 @@ final class StatusBarLayoutTests: XCTestCase {
         XCTAssertEqual(
             watchdog.failureReason(
                 for: observation(
-                    arrowFrame: CGRect(x: 1330, y: 1138.5, width: 24, height: 22)
+                    arrowFrame: CGRect(x: 1316, y: 1138.5, width: 24, height: 22)
                 ),
                 isLTR: false
             ),
@@ -219,7 +219,7 @@ final class StatusBarLayoutTests: XCTestCase {
             (observation(windowVisible: false), .chevronWindowHidden),
             (observation(arrowFrame: nil), .chevronFrameUnavailable),
             (observation(arrowFrame: CGRect(x: 1340, y: 1138.5, width: 24, height: 22)), .chevronMovedAcrossAnchor),
-            (observation(arrowFrame: CGRect(x: 1374, y: 1138.5, width: 24, height: 22)), .chevronShiftedDuringCollapse)
+            (observation(arrowFrame: CGRect(x: 2202, y: 1138.5, width: 24, height: 22)), .chevronShiftedDuringCollapse)
         ]
 
         for (observation, expectedReason) in cases {
@@ -237,6 +237,27 @@ final class StatusBarLayoutTests: XCTestCase {
             XCTAssertTrue(watchdog.requiresManualCollapse)
             XCTAssertFalse(watchdog.shouldScheduleAutoHide)
         }
+    }
+
+    func testCollapsedLayoutWatchdogRejectsChevronOverlappingAnchor() {
+        var watchdog = StatusBarLayoutWatchdog()
+        let overlappingFrames = StatusBarLayoutWatchdog.Frames(
+            arrow: CGRect(x: 1395, y: 1138.5, width: 24, height: 22),
+            anchor: CGRect(x: 1359, y: 1138.5, width: 836, height: 22)
+        )
+        watchdog.setReferenceFrames(overlappingFrames)
+
+        let result = watchdog.failureReason(
+            for: observation(
+                arrowFrame: overlappingFrames.arrow,
+                anchorFrame: overlappingFrames.anchor
+            ),
+            isLTR: true
+        )
+
+        XCTAssertEqual(result, .chevronMovedAcrossAnchor)
+        XCTAssertTrue(watchdog.requiresManualCollapse)
+        XCTAssertFalse(watchdog.shouldScheduleAutoHide)
     }
 
     func testCollapsedLayoutWatchdogRequiresASettledReferenceFrame() {
@@ -317,7 +338,7 @@ final class StatusBarLayoutTests: XCTestCase {
 
     private var referenceFrames: StatusBarLayoutWatchdog.Frames {
         StatusBarLayoutWatchdog.Frames(
-            arrow: CGRect(x: 1388, y: 1138.5, width: 24, height: 22),
+            arrow: CGRect(x: 2220, y: 1138.5, width: 24, height: 22),
             anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
         )
     }
@@ -332,7 +353,7 @@ final class StatusBarLayoutTests: XCTestCase {
         buttonExists: Bool = true,
         buttonHidden: Bool = false,
         windowVisible: Bool = true,
-        arrowFrame: CGRect? = CGRect(x: 1388, y: 1138.5, width: 24, height: 22),
+        arrowFrame: CGRect? = CGRect(x: 2220, y: 1138.5, width: 24, height: 22),
         anchorFrame: CGRect? = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
     ) -> StatusBarLayoutWatchdog.Observation {
         StatusBarLayoutWatchdog.Observation(
