@@ -6,13 +6,13 @@ import XCTest
 
 final class StatusBarLayoutTests: XCTestCase {
     func testCollapseUnitStaysBelowTheMacOS27StatusItemCliff() {
-        XCTAssertEqual(StatusBarLayout.collapseUnit(narrowestDisplayWidth: 1728), 800)
-        XCTAssertEqual(StatusBarLayout.collapseUnit(narrowestDisplayWidth: 400), 200)
+        XCTAssertEqual(StatusBarLayoutValidator.collapseUnit(narrowestDisplayWidth: 1728), 800)
+        XCTAssertEqual(StatusBarLayoutValidator.collapseUnit(narrowestDisplayWidth: 400), 200)
     }
 
     func testSpacerCountCoversTheWidestDisplayWithoutExceedingCapacity() {
         XCTAssertEqual(
-            StatusBarLayout.activeSpacerCount(
+            StatusBarLayoutValidator.activeSpacerCount(
                 widestDisplayWidth: 1800,
                 collapseUnit: 800,
                 availableSpacers: 6
@@ -20,7 +20,7 @@ final class StatusBarLayoutTests: XCTestCase {
             2
         )
         XCTAssertEqual(
-            StatusBarLayout.activeSpacerCount(
+            StatusBarLayoutValidator.activeSpacerCount(
                 widestDisplayWidth: 5800,
                 collapseUnit: 800,
                 availableSpacers: 6
@@ -31,7 +31,7 @@ final class StatusBarLayoutTests: XCTestCase {
 
     func testSpacerCountIsZeroForInvalidOrEmptyInputs() {
         XCTAssertEqual(
-            StatusBarLayout.activeSpacerCount(
+            StatusBarLayoutValidator.activeSpacerCount(
                 widestDisplayWidth: 1800,
                 collapseUnit: 0,
                 availableSpacers: 6
@@ -39,7 +39,7 @@ final class StatusBarLayoutTests: XCTestCase {
             0
         )
         XCTAssertEqual(
-            StatusBarLayout.activeSpacerCount(
+            StatusBarLayoutValidator.activeSpacerCount(
                 widestDisplayWidth: 1800,
                 collapseUnit: 800,
                 availableSpacers: 0
@@ -51,14 +51,14 @@ final class StatusBarLayoutTests: XCTestCase {
     func testChevronMustBeAfterAnchorInLTRLayout() {
         let anchor = CGRect(x: 100, y: 0, width: 20, height: 22)
         XCTAssertTrue(
-            StatusBarLayout.isChevronSeparatedFromAnchor(
+            StatusBarLayoutValidator.isChevronSeparatedFromAnchor(
                 arrowFrame: CGRect(x: 120, y: 0, width: 24, height: 22),
                 anchorFrame: anchor,
                 isLTR: true
             )
         )
         XCTAssertFalse(
-            StatusBarLayout.isChevronSeparatedFromAnchor(
+            StatusBarLayoutValidator.isChevronSeparatedFromAnchor(
                 arrowFrame: CGRect(x: 119, y: 0, width: 24, height: 22),
                 anchorFrame: anchor,
                 isLTR: true
@@ -69,14 +69,14 @@ final class StatusBarLayoutTests: XCTestCase {
     func testChevronMustBeBeforeAnchorInRTLLayout() {
         let anchor = CGRect(x: 100, y: 0, width: 20, height: 22)
         XCTAssertTrue(
-            StatusBarLayout.isChevronSeparatedFromAnchor(
+            StatusBarLayoutValidator.isChevronSeparatedFromAnchor(
                 arrowFrame: CGRect(x: 56, y: 0, width: 24, height: 22),
                 anchorFrame: anchor,
                 isLTR: false
             )
         )
         XCTAssertFalse(
-            StatusBarLayout.isChevronSeparatedFromAnchor(
+            StatusBarLayoutValidator.isChevronSeparatedFromAnchor(
                 arrowFrame: CGRect(x: 77, y: 0, width: 24, height: 22),
                 anchorFrame: anchor,
                 isLTR: false
@@ -87,28 +87,28 @@ final class StatusBarLayoutTests: XCTestCase {
     func testCollapsedLayoutOrderDetectsChevronMovingAcrossAnchor() {
         let anchor = CGRect(x: 100, y: 0, width: 836, height: 22)
         XCTAssertTrue(
-            StatusBarLayout.hasExpectedItemOrder(
+            StatusBarLayoutValidator.hasExpectedItemOrder(
                 arrowFrame: CGRect(x: 140, y: 0, width: 24, height: 22),
                 anchorFrame: anchor,
                 isLTR: true
             )
         )
         XCTAssertFalse(
-            StatusBarLayout.hasExpectedItemOrder(
+            StatusBarLayoutValidator.hasExpectedItemOrder(
                 arrowFrame: CGRect(x: 99, y: 0, width: 24, height: 22),
                 anchorFrame: anchor,
                 isLTR: true
             )
         )
         XCTAssertTrue(
-            StatusBarLayout.hasExpectedItemOrder(
+            StatusBarLayoutValidator.hasExpectedItemOrder(
                 arrowFrame: CGRect(x: 76, y: 0, width: 24, height: 22),
                 anchorFrame: anchor,
                 isLTR: false
             )
         )
         XCTAssertFalse(
-            StatusBarLayout.hasExpectedItemOrder(
+            StatusBarLayoutValidator.hasExpectedItemOrder(
                 arrowFrame: CGRect(x: 101, y: 0, width: 24, height: 22),
                 anchorFrame: anchor,
                 isLTR: false
@@ -122,14 +122,14 @@ final class StatusBarLayoutTests: XCTestCase {
         let currentArrow = CGRect(x: 2202, y: 1138.5, width: 24, height: 22)
 
         XCTAssertTrue(
-            StatusBarLayout.hasExpectedItemOrder(
+            StatusBarLayoutValidator.hasExpectedItemOrder(
                 arrowFrame: currentArrow,
                 anchorFrame: referenceAnchor,
                 isLTR: true
             )
         )
         XCTAssertTrue(
-            StatusBarLayout.hasChevronShiftedTowardAnchorBeyondTolerance(
+            StatusBarLayoutValidator.hasChevronShiftedTowardAnchorBeyondTolerance(
                 arrowFrame: currentArrow,
                 anchorFrame: referenceAnchor,
                 referenceArrowFrame: referenceArrow,
@@ -144,7 +144,7 @@ final class StatusBarLayoutTests: XCTestCase {
         let referenceArrow = CGRect(x: 2220, y: 1138.5, width: 24, height: 22)
 
         XCTAssertFalse(
-            StatusBarLayout.hasChevronShiftedTowardAnchorBeyondTolerance(
+            StatusBarLayoutValidator.hasChevronShiftedTowardAnchorBeyondTolerance(
                 arrowFrame: CGRect(x: 2226, y: 1138.5, width: 24, height: 22),
                 anchorFrame: anchor,
                 referenceArrowFrame: referenceArrow,
@@ -154,196 +154,242 @@ final class StatusBarLayoutTests: XCTestCase {
         )
     }
 
-    func testCollapsedLayoutWatchdogAcceptsStableChevronFrames() {
-        var watchdog = StatusBarLayoutWatchdog()
-        watchdog.setReferenceFrames(referenceFrames)
+    func testLayoutValidatorAcceptsStableChevronFrames() {
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(referenceFrames)
 
-        XCTAssertNil(watchdog.failureReason(for: healthyObservation, isLTR: true))
-        XCTAssertFalse(watchdog.requiresManualCollapse)
-        XCTAssertTrue(watchdog.shouldScheduleAutoHide)
+        XCTAssertNil(validator.validate(healthyObservation, isLTR: true))
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
     }
 
-    func testCollapsedLayoutWatchdogAllowsChevronToShiftAwayFromAnchor() {
-        var watchdog = StatusBarLayoutWatchdog()
-        watchdog.setReferenceFrames(
-            StatusBarLayoutWatchdog.Frames(
-                arrow: CGRect(x: 2220, y: 1138.5, width: 24, height: 22),
-                anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
-            )
-        )
+    func testLayoutValidatorAllowsChevronToShiftAwayFromAnchor() {
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(referenceFrames)
 
-        let observation = observation(
+        let current = observation(
             arrowFrame: CGRect(x: 2222, y: 1138.5, width: 24, height: 22),
             anchorFrame: CGRect(x: 1326, y: 1138.5, width: 836, height: 22)
         )
 
-        XCTAssertNil(watchdog.failureReason(for: observation, isLTR: true))
-        XCTAssertFalse(watchdog.requiresManualCollapse)
-        XCTAssertTrue(watchdog.shouldScheduleAutoHide)
+        XCTAssertNil(validator.validate(current, isLTR: true))
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
     }
 
-    func testCollapsedLayoutWatchdogMirrorsSafeDriftForRTL() {
-        var watchdog = StatusBarLayoutWatchdog()
-        watchdog.setReferenceFrames(
-            StatusBarLayoutWatchdog.Frames(
+    func testLayoutValidatorMirrorsSafeDriftForRTL() {
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(
+            StatusBarLayoutValidator.Frames(
                 arrow: CGRect(x: 1300, y: 1138.5, width: 24, height: 22),
                 anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
             )
         )
 
         XCTAssertNil(
-            watchdog.failureReason(
-                for: observation(
-                    arrowFrame: CGRect(x: 1292, y: 1138.5, width: 24, height: 22)
-                ),
+            validator.validate(
+                observation(arrowFrame: CGRect(x: 1292, y: 1138.5, width: 24, height: 22)),
                 isLTR: false
             )
         )
 
         XCTAssertEqual(
-            watchdog.failureReason(
-                for: observation(
-                    arrowFrame: CGRect(x: 1316, y: 1138.5, width: 24, height: 22)
-                ),
+            validator.validate(
+                observation(arrowFrame: CGRect(x: 1316, y: 1138.5, width: 24, height: 22)),
                 isLTR: false
             ),
             .chevronShiftedDuringCollapse
         )
     }
 
-    func testCollapsedLayoutWatchdogRequestsRecoveryForInvalidLayouts() {
-        let cases: [(StatusBarLayoutWatchdog.Observation, StatusBarLayoutWatchdog.FailureReason)] = [
+    func testCollapsedRegionCoverageCountsOnlyVisibleSpacers() {
+        let spacers = [
+            StatusBarLayoutValidator.SpacerObservation(isVisible: true, length: 800),
+            StatusBarLayoutValidator.SpacerObservation(isVisible: false, length: 800)
+        ]
+
+        XCTAssertFalse(
+            StatusBarLayoutValidator.hasAdequateCollapsedRegion(
+                requiredDisplayWidth: 1700,
+                anchorLength: 800,
+                spacers: spacers
+            )
+        )
+        XCTAssertTrue(
+            StatusBarLayoutValidator.hasAdequateCollapsedRegion(
+                requiredDisplayWidth: 1600,
+                anchorLength: 800,
+                spacers: spacers
+            )
+        )
+    }
+
+    func testLayoutValidatorRejectsCollapsedRegionThatDoesNotCoverWidestDisplay() {
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(referenceFrames)
+
+        XCTAssertEqual(
+            validator.validate(
+                observation(widestDisplayWidth: 6000),
+                isLTR: true
+            ),
+            .collapsedRegionTooNarrow
+        )
+        XCTAssertTrue(validator.requiresManualCollapse)
+        XCTAssertFalse(validator.shouldScheduleAutoHide)
+    }
+
+    func testLayoutValidatorRejectsItemWidthMismatches() {
+        var chevronValidator = StatusBarLayoutValidator()
+        chevronValidator.setReferenceFrames(referenceFrames)
+        XCTAssertEqual(
+            chevronValidator.validate(observation(chevronLength: 36), isLTR: true),
+            .chevronWidthMismatch
+        )
+
+        var anchorValidator = StatusBarLayoutValidator()
+        anchorValidator.setReferenceFrames(referenceFrames)
+        XCTAssertEqual(
+            anchorValidator.validate(observation(collapseAnchorLength: 800), isLTR: true),
+            .collapseAnchorWidthMismatch
+        )
+    }
+
+    func testLayoutValidatorRequestsRecoveryForInvalidChevronLayouts() {
+        let cases: [(StatusBarLayoutValidator.Observation, StatusBarLayoutValidator.FailureReason)] = [
             (observation(chevronItemVisible: false), .chevronItemHidden),
             (observation(buttonExists: false), .chevronButtonMissing),
             (observation(buttonHidden: true), .chevronButtonHidden),
             (observation(windowVisible: false), .chevronWindowHidden),
             (observation(arrowFrame: nil), .chevronFrameUnavailable),
+            (
+                observation(arrowFrame: CGRect(x: CGFloat.nan, y: 1138.5, width: 24, height: 22)),
+                .chevronFrameInvalid
+            ),
+            (
+                observation(anchorFrame: CGRect(x: 1352, y: 1138.5, width: CGFloat.nan, height: 22)),
+                .collapseAnchorFrameInvalid
+            ),
             (observation(arrowFrame: CGRect(x: 1340, y: 1138.5, width: 24, height: 22)), .chevronMovedAcrossAnchor),
             (observation(arrowFrame: CGRect(x: 2202, y: 1138.5, width: 24, height: 22)), .chevronShiftedDuringCollapse)
         ]
 
         for (observation, expectedReason) in cases {
-            var watchdog = StatusBarLayoutWatchdog()
-            watchdog.setReferenceFrames(referenceFrames)
+            var validator = StatusBarLayoutValidator()
+            validator.setReferenceFrames(referenceFrames)
 
             XCTAssertEqual(
-                watchdog.failureReason(for: observation, isLTR: true),
+                validator.validate(observation, isLTR: true),
                 expectedReason,
                 "Unexpected recovery reason for \(expectedReason.rawValue)"
             )
-            XCTAssertTrue(watchdog.requiresManualCollapse)
-            XCTAssertFalse(watchdog.shouldScheduleAutoHide)
-            XCTAssertNil(watchdog.failureReason(for: healthyObservation, isLTR: true))
-            XCTAssertTrue(watchdog.requiresManualCollapse)
-            XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+            XCTAssertTrue(validator.requiresManualCollapse)
+            XCTAssertFalse(validator.shouldScheduleAutoHide)
+            XCTAssertNil(validator.validate(healthyObservation, isLTR: true))
+            XCTAssertTrue(validator.requiresManualCollapse)
+            XCTAssertFalse(validator.shouldScheduleAutoHide)
         }
     }
 
-    func testCollapsedLayoutWatchdogRejectsChevronOverlappingAnchor() {
-        var watchdog = StatusBarLayoutWatchdog()
-        let overlappingFrames = StatusBarLayoutWatchdog.Frames(
-            arrow: CGRect(x: 1395, y: 1138.5, width: 24, height: 22),
-            anchor: CGRect(x: 1359, y: 1138.5, width: 836, height: 22)
+    func testLayoutValidatorAcceptsChevronAtExpectedCollapsedOffset() {
+        var validator = StatusBarLayoutValidator()
+        let collapsedFrames = StatusBarLayoutValidator.Frames(
+            arrow: CGRect(x: 1406, y: 1138.5, width: 24, height: 22),
+            anchor: CGRect(x: 1370, y: 1138.5, width: 836, height: 22)
         )
-        watchdog.setReferenceFrames(overlappingFrames)
+        validator.setReferenceFrames(collapsedFrames)
 
-        let result = watchdog.failureReason(
-            for: observation(
-                arrowFrame: overlappingFrames.arrow,
-                anchorFrame: overlappingFrames.anchor
-            ),
-            isLTR: true
+        XCTAssertNil(
+            validator.validate(
+                observation(
+                    arrowFrame: collapsedFrames.arrow,
+                    anchorFrame: collapsedFrames.anchor
+                ),
+                isLTR: true
+            )
         )
-
-        XCTAssertEqual(result, .chevronMovedAcrossAnchor)
-        XCTAssertTrue(watchdog.requiresManualCollapse)
-        XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
     }
 
-    func testCollapsedLayoutWatchdogRequiresASettledReferenceFrame() {
-        var watchdog = StatusBarLayoutWatchdog()
+    func testLayoutValidatorRequiresASettledReferenceFrame() {
+        var validator = StatusBarLayoutValidator()
 
         XCTAssertEqual(
-            watchdog.failureReason(for: healthyObservation, isLTR: true),
+            validator.validate(healthyObservation, isLTR: true),
             .chevronReferenceUnavailable
         )
-        XCTAssertTrue(watchdog.requiresManualCollapse)
-        XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+        XCTAssertTrue(validator.requiresManualCollapse)
+        XCTAssertFalse(validator.shouldScheduleAutoHide)
     }
 
     func testExpandedLayoutStopsMonitoringWithoutClearingRecoveryGate() {
-        var watchdog = StatusBarLayoutWatchdog()
-        watchdog.setReferenceFrames(referenceFrames)
-        watchdog.requireManualCollapse()
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(referenceFrames)
+        validator.requireManualCollapse()
 
-        XCTAssertNil(
-            watchdog.failureReason(for: observation(isCollapsed: false), isLTR: true)
-        )
-        XCTAssertNil(watchdog.referenceFrames)
-        XCTAssertTrue(watchdog.requiresManualCollapse)
-        XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+        XCTAssertNil(validator.validate(observation(isCollapsed: false), isLTR: true))
+        XCTAssertNil(validator.referenceFrames)
+        XCTAssertTrue(validator.requiresManualCollapse)
+        XCTAssertFalse(validator.shouldScheduleAutoHide)
     }
 
     func testExplicitUserCollapseTriggersClearRecoveryGate() {
         for trigger in [StatusBarTransitionTrigger.menuBarButton, .globalShortcut] {
-            var watchdog = StatusBarLayoutWatchdog()
-            watchdog.requireManualCollapse()
+            var validator = StatusBarLayoutValidator()
+            validator.requireManualCollapse()
 
-            watchdog.noteCollapseAttempt(trigger: trigger)
+            validator.noteCollapseAttempt(trigger: trigger)
 
-            XCTAssertFalse(watchdog.requiresManualCollapse, "\(trigger) should clear the recovery gate")
-            XCTAssertTrue(watchdog.shouldScheduleAutoHide)
+            XCTAssertFalse(validator.requiresManualCollapse, "\(trigger) should clear the recovery gate")
+            XCTAssertTrue(validator.shouldScheduleAutoHide)
         }
     }
 
     func testAutomaticAndRecoveryCollapseTriggersKeepRecoveryGateClosed() {
         for trigger in [StatusBarTransitionTrigger.launch, .autoHide, .hover, .layoutRecovery] {
-            var watchdog = StatusBarLayoutWatchdog()
-            watchdog.requireManualCollapse()
+            var validator = StatusBarLayoutValidator()
+            validator.requireManualCollapse()
 
-            watchdog.noteCollapseAttempt(trigger: trigger)
+            validator.noteCollapseAttempt(trigger: trigger)
 
-            XCTAssertTrue(watchdog.requiresManualCollapse, "\(trigger) must not clear the recovery gate")
-            XCTAssertFalse(watchdog.shouldScheduleAutoHide)
+            XCTAssertTrue(validator.requiresManualCollapse, "\(trigger) must not clear the recovery gate")
+            XCTAssertFalse(validator.shouldScheduleAutoHide)
         }
     }
 
-    func testCollapsedLayoutWatchdogUsesMirroredOrderForRTL() {
-        var watchdog = StatusBarLayoutWatchdog()
-        watchdog.setReferenceFrames(
-            StatusBarLayoutWatchdog.Frames(
+    func testLayoutValidatorUsesMirroredOrderForRTL() {
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(
+            StatusBarLayoutValidator.Frames(
                 arrow: CGRect(x: 1312, y: 1138.5, width: 24, height: 22),
                 anchor: referenceFrames.anchor
             )
         )
 
         XCTAssertNil(
-            watchdog.failureReason(
-                for: observation(
-                    arrowFrame: CGRect(x: 1312, y: 1138.5, width: 24, height: 22)
-                ),
+            validator.validate(
+                observation(arrowFrame: CGRect(x: 1312, y: 1138.5, width: 24, height: 22)),
                 isLTR: false
             )
         )
         XCTAssertEqual(
-            watchdog.failureReason(
-                for: observation(
-                    arrowFrame: CGRect(x: 1360, y: 1138.5, width: 24, height: 22)
-                ),
+            validator.validate(
+                observation(arrowFrame: CGRect(x: 1360, y: 1138.5, width: 24, height: 22)),
                 isLTR: false
             ),
             .chevronMovedAcrossAnchor
         )
     }
 
-    private var referenceFrames: StatusBarLayoutWatchdog.Frames {
-        StatusBarLayoutWatchdog.Frames(
+    private var referenceFrames: StatusBarLayoutValidator.Frames {
+        StatusBarLayoutValidator.Frames(
             arrow: CGRect(x: 2220, y: 1138.5, width: 24, height: 22),
             anchor: CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
         )
     }
 
-    private var healthyObservation: StatusBarLayoutWatchdog.Observation {
+    private var healthyObservation: StatusBarLayoutValidator.Observation {
         observation()
     }
 
@@ -354,16 +400,39 @@ final class StatusBarLayoutTests: XCTestCase {
         buttonHidden: Bool = false,
         windowVisible: Bool = true,
         arrowFrame: CGRect? = CGRect(x: 2220, y: 1138.5, width: 24, height: 22),
-        anchorFrame: CGRect? = CGRect(x: 1352, y: 1138.5, width: 836, height: 22)
-    ) -> StatusBarLayoutWatchdog.Observation {
-        StatusBarLayoutWatchdog.Observation(
+        anchorFrame: CGRect? = CGRect(x: 1352, y: 1138.5, width: 836, height: 22),
+        widestDisplayWidth: CGFloat = 5800,
+        collapseAnchorVisible: Bool = true,
+        collapseAnchorButtonExists: Bool = true,
+        collapseAnchorButtonHidden: Bool = false,
+        collapseAnchorWindowVisible: Bool = true,
+        collapseAnchorLength: CGFloat = 836,
+        chevronLength: CGFloat = 24,
+        spacers: [StatusBarLayoutValidator.SpacerObservation] = Array(
+            repeating: StatusBarLayoutValidator.SpacerObservation(isVisible: true, length: 836),
+            count: 6
+        )
+    ) -> StatusBarLayoutValidator.Observation {
+        StatusBarLayoutValidator.Observation(
             isCollapsed: isCollapsed,
-            chevronItemVisible: chevronItemVisible,
-            buttonExists: buttonExists,
-            buttonHidden: buttonHidden,
-            windowVisible: windowVisible,
-            arrowFrame: arrowFrame,
-            anchorFrame: anchorFrame
+            widestDisplayWidth: widestDisplayWidth,
+            chevron: StatusBarLayoutValidator.ItemObservation(
+                isVisible: chevronItemVisible,
+                buttonExists: buttonExists,
+                buttonHidden: buttonHidden,
+                windowVisible: windowVisible,
+                length: chevronLength,
+                frame: arrowFrame
+            ),
+            collapseAnchor: StatusBarLayoutValidator.ItemObservation(
+                isVisible: collapseAnchorVisible,
+                buttonExists: collapseAnchorButtonExists,
+                buttonHidden: collapseAnchorButtonHidden,
+                windowVisible: collapseAnchorWindowVisible,
+                length: collapseAnchorLength,
+                frame: anchorFrame
+            ),
+            spacers: spacers
         )
     }
 

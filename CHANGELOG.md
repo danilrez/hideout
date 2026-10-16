@@ -4,6 +4,13 @@ All notable changes to Hideout are documented here.
 
 ## [Unreleased]
 
+## [0.2.7]
+
+### Fixed
+
+- Prevented automatic layout recovery from reopening the menu bar when the collapsed chevron remains in the expected order but overlaps the anchor's expanded frame.
+- Added validation for chevron and anchor geometry and for the configured collapse region's coverage across the widest display.
+
 ## [0.2.6]
 
 ### Fixed
