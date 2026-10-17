@@ -1,6 +1,6 @@
 # Hideout
 
-Hideout keeps your macOS menu bar tidy by moving selected menu bar items into the system overflow area until you need them.
+Hideout keeps your macOS menu bar tidy by hiding selected icons in the system overflow area, where they remain easy to access.
 
 ## Preview
 
@@ -12,7 +12,7 @@ Hideout keeps your macOS menu bar tidy by moving selected menu bar items into th
 
 - Hide and reveal menu bar items with the arrow in the menu bar.
 - Reorder items with `⌘`-drag.
-- Configure a global shortcut, automatic hiding delay, login launch, and whether the full menu bar returns when expanding.
+- Customize the keyboard shortcut, automatic hiding, and launch behavior.
 - Check for stable GitHub releases and get notified when an update is available.
 
 ## Requirements
@@ -23,7 +23,7 @@ Hideout keeps your macOS menu bar tidy by moving selected menu bar items into th
 
 Download the latest DMG from the [GitHub Releases](https://github.com/danilrez/Hideout/releases) page, open it, and drag `Hideout.app` to `/Applications`.
 
-Release DMGs use an ad-hoc signature to seal the application bundle and its resources. They are not signed with an Apple Developer ID certificate or notarized, so macOS may require a manual confirmation the first time a downloaded build is opened.
+macOS may ask you to confirm the first time you open the app.
 
 ## Usage
 
@@ -31,13 +31,11 @@ Release DMGs use an ad-hoc signature to seal the application bundle and its reso
 2. Hold `⌘` and drag menu bar icons past the `>>` control to choose which items Hideout manages.
 3. Click the arrow to collapse or expand the managed items.
 4. Right-click the arrow to check for updates, open Settings, toggle automatic collapse, or quit Hideout.
-5. In Settings, configure the global shortcut, automatic hiding delay, login launch, whether the preferences window opens at launch, and whether the full menu bar returns when expanding.
+5. In Settings, choose the shortcut, automatic hiding delay, launch options, and how the menu bar appears when you expand it.
 
-Hideout checks for updates about once a day. Notifications require macOS permission. The right-click menu lets you check manually and opens the GitHub release page when an update is found or the check fails. Updates are downloaded and installed manually from the release DMG.
+## Settings
 
-## Menu bar changes during a call
-
-macOS can add or rearrange native microphone, camera, or screen-sharing indicators during a call. If a layout change hides the Hideout arrow, makes its position unavailable, moves it across the collapse anchor, or shifts it substantially toward the anchor while items are collapsed, Hideout expands the managed menu bar and pauses automatic hiding. After the indicators settle, click the arrow to collapse the menu bar again.
+Adjust Hideout to fit the way you use your menu bar.
 
 <p align="center">
   <img src="docs/previews/Settings.png?v=0.2.0" alt="Hideout Settings" width="720">

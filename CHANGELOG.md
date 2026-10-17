@@ -4,6 +4,13 @@ All notable changes to Hideout are documented here.
 
 ## [Unreleased]
 
+## [0.2.8]
+
+### Fixed
+
+- Prevented the menu bar from unexpectedly expanding during sleep and wake.
+- Improved handling of temporary menu bar layout changes.
+
 ## [0.2.7]
 
 ### Fixed

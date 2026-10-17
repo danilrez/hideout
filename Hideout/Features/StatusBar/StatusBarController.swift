@@ -91,6 +91,8 @@ class StatusBarController {
     private var layoutWatchdogTimer: Timer?
     private var layoutWatchdogBaselineTask: Task<Void, Never>?
     private var layoutWatchdogGeneration = 0
+    private var sleepTransition = StatusBarSleepTransition()
+    private var sleepWakeGeneration = 0
     private var layoutValidator = StatusBarLayoutValidator()
     
     //MARK: - BarItems
@@ -100,6 +102,8 @@ class StatusBarController {
     // lands left of the previous one, so the item order is anchor, spacers, arrow.
     private static let expandedButtonLength: CGFloat = 24
     private static let expandedAnchorLength: CGFloat = 20
+    private static let layoutValidationRecheckDelay: TimeInterval = 0.25
+    private static let systemWakeSettleDelay: TimeInterval = 1.0
 #if HIDEOUT_DIAGNOSTICS
     private static let diagnosticsMenuItemTag = 2
 #endif
@@ -302,7 +306,6 @@ class StatusBarController {
         restoreRemovedStatusItems()
         setupHoverToExpandIfEnabled()
         NotificationCenter.default.addObserver(self, selector: #selector(handleScreenParametersChanged), name: NSApplication.didChangeScreenParametersNotification, object: nil)
-#if HIDEOUT_DIAGNOSTICS
         NSWorkspace.shared.notificationCenter.addObserver(
             self,
             selector: #selector(handleSystemWillSleep),
@@ -315,7 +318,6 @@ class StatusBarController {
             name: NSWorkspace.didWakeNotification,
             object: nil
         )
-#endif
         recordStatusBarState("statusBarController.initialized")
 #if HIDEOUT_DIAGNOSTICS
         startDiagnosticsHeartbeat()
@@ -329,9 +331,7 @@ class StatusBarController {
     
     isolated deinit {
         NotificationCenter.default.removeObserver(self)
-#if HIDEOUT_DIAGNOSTICS
         NSWorkspace.shared.notificationCenter.removeObserver(self)
-#endif
         hoverDwellTimer?.invalidate()
 #if HIDEOUT_DIAGNOSTICS
         diagnosticsHeartbeatTimer?.invalidate()
@@ -417,13 +417,21 @@ class StatusBarController {
             return
         }
 
-        let currentFrames = chevronFramesOnScreen
+        let chevronObservation = layoutItemObservation(for: btnExpandCollapse)
+        let anchorObservation = layoutItemObservation(for: collapseAnchor)
+        let currentFrames: (arrow: CGRect, anchor: CGRect)?
+        if let arrowFrame = chevronObservation.frame,
+           let anchorFrame = anchorObservation.frame {
+            currentFrames = (arrow: arrowFrame, anchor: anchorFrame)
+        } else {
+            currentFrames = nil
+        }
         let failureReason = layoutValidator.validate(
             StatusBarLayoutValidator.Observation(
                 isCollapsed: isCollapsed,
                 widestDisplayWidth: widestDisplayWidth,
-                chevron: layoutItemObservation(for: btnExpandCollapse),
-                collapseAnchor: layoutItemObservation(for: collapseAnchor),
+                chevron: chevronObservation,
+                collapseAnchor: anchorObservation,
                 spacers: spacers.map {
                     StatusBarLayoutValidator.SpacerObservation(
                         isVisible: $0.isVisible,
@@ -438,15 +446,42 @@ class StatusBarController {
             return
         }
 
-        recordStatusBarState("statusBar.layoutWatchdog.warning", additionalFields: [
+        let validationFields = [
             "reason": failureReason.rawValue,
+            "validationLayoutDirectionLTR": String(Constant.isUsingLTRLanguage),
+            "validationArrowFrame": currentFrames.map { rectDescription($0.arrow) } ?? "unavailable",
+            "validationAnchorFrame": currentFrames.map { rectDescription($0.anchor) } ?? "unavailable",
             "referenceChevronOffsetFromAnchor": layoutValidator.referenceFrames.map {
                 scalar($0.arrow.minX - $0.anchor.minX)
             } ?? "unavailable",
             "currentChevronOffsetFromAnchor": currentFrames.map {
                 scalar($0.arrow.minX - $0.anchor.minX)
             } ?? "unavailable"
-        ])
+        ]
+
+        guard layoutValidator.requiresManualCollapse else {
+            recordStatusBarState(
+                "statusBar.layoutWatchdog.warningPending",
+                additionalFields: validationFields.merging(
+                    ["consecutiveFailureObservations": "1"],
+                    uniquingKeysWith: { _, newValue in newValue }
+                )
+            )
+            let generation = layoutWatchdogGeneration
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.layoutValidationRecheckDelay) { [weak self] in
+                guard let self, self.layoutWatchdogGeneration == generation else { return }
+                self.checkCollapsedLayout()
+            }
+            return
+        }
+
+        recordStatusBarState(
+            "statusBar.layoutWatchdog.warning",
+            additionalFields: validationFields.merging(
+                ["consecutiveFailureObservations": "2"],
+                uniquingKeysWith: { _, newValue in newValue }
+            )
+        )
         timer?.invalidate()
         timer = nil
         recordStatusBarState("statusBar.layoutRecovery.started", additionalFields: [
@@ -456,16 +491,48 @@ class StatusBarController {
     }
 
     @objc private func handleSystemWillSleep() {
+        sleepWakeGeneration += 1
+        sleepTransition.willSleep(isCollapsed: isCollapsed)
+        stopLayoutWatchdog()
 #if HIDEOUT_DIAGNOSTICS
-        recordStatusBarState("system.willSleep")
+        recordStatusBarState("system.willSleep", additionalFields: [
+            "wasCollapsed": String(sleepTransition.wasCollapsedBeforeSleep ?? false)
+        ])
 #endif
     }
 
     @objc private func handleSystemDidWake() {
+        let wakeAction = sleepTransition.didWake(isCollapsed: isCollapsed)
+        sleepWakeGeneration += 1
+        let generation = sleepWakeGeneration
 #if HIDEOUT_DIAGNOSTICS
-        recordStatusBarState("system.didWake")
+        recordStatusBarState("system.didWake", additionalFields: [
+            "wakeAction": wakeAction.rawValue
+        ])
         scheduleLayoutCheckpoints(after: "system.didWake", trigger: nil)
 #endif
+        guard wakeAction != .none else { return }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.systemWakeSettleDelay) { [weak self] in
+            guard let self, self.sleepWakeGeneration == generation else { return }
+
+            switch wakeAction {
+            case .none:
+                break
+            case .restartLayoutWatchdog:
+                guard self.isCollapsed else { return }
+                self.recordStatusBarState("statusBar.wakeRecovery.monitorRestarted")
+                self.startLayoutWatchdog()
+            case .restoreCollapsedState:
+                if self.isCollapsed {
+                    self.startLayoutWatchdog()
+                } else {
+                    self.layoutValidator.noteCollapseAttempt(trigger: .systemWake)
+                    self.recordStatusBarState("statusBar.wakeRecovery.collapseRestored")
+                    self.collapseMenuBar(trigger: .systemWake)
+                }
+            }
+        }
     }
 
     private func recordStatusBarState(_ event: String, additionalFields: [String: String] = [:]) {

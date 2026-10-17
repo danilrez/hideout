@@ -5,6 +5,35 @@ import XCTest
 @testable import Hideout
 
 final class StatusBarLayoutTests: XCTestCase {
+    func testWakeRestartsWatchdogWhenBarStayedCollapsedDuringSleep() {
+        var transition = StatusBarSleepTransition()
+        transition.willSleep(isCollapsed: true)
+
+        XCTAssertEqual(transition.didWake(isCollapsed: true), .restartLayoutWatchdog)
+        XCTAssertNil(transition.wasCollapsedBeforeSleep)
+    }
+
+    func testWakeRestoresCollapsedStateWhenBarExpandedDuringSleep() {
+        var transition = StatusBarSleepTransition()
+        transition.willSleep(isCollapsed: true)
+
+        XCTAssertEqual(transition.didWake(isCollapsed: false), .restoreCollapsedState)
+        XCTAssertNil(transition.wasCollapsedBeforeSleep)
+    }
+
+    func testWakeDoesNotCollapseBarThatWasExpandedBeforeSleep() {
+        var transition = StatusBarSleepTransition()
+        transition.willSleep(isCollapsed: false)
+
+        XCTAssertEqual(transition.didWake(isCollapsed: false), .none)
+    }
+
+    func testWakeWithoutSleepDoesNotChangeBarState() {
+        var transition = StatusBarSleepTransition()
+
+        XCTAssertEqual(transition.didWake(isCollapsed: false), .none)
+    }
+
     func testCollapseUnitStaysBelowTheMacOS27StatusItemCliff() {
         XCTAssertEqual(StatusBarLayoutValidator.collapseUnit(narrowestDisplayWidth: 1728), 800)
         XCTAssertEqual(StatusBarLayoutValidator.collapseUnit(narrowestDisplayWidth: 400), 200)
@@ -235,6 +264,15 @@ final class StatusBarLayoutTests: XCTestCase {
             ),
             .collapsedRegionTooNarrow
         )
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
+        XCTAssertEqual(
+            validator.validate(
+                observation(widestDisplayWidth: 6000),
+                isLTR: true
+            ),
+            .collapsedRegionTooNarrow
+        )
         XCTAssertTrue(validator.requiresManualCollapse)
         XCTAssertFalse(validator.shouldScheduleAutoHide)
     }
@@ -283,6 +321,13 @@ final class StatusBarLayoutTests: XCTestCase {
                 expectedReason,
                 "Unexpected recovery reason for \(expectedReason.rawValue)"
             )
+            XCTAssertFalse(validator.requiresManualCollapse)
+            XCTAssertTrue(validator.shouldScheduleAutoHide)
+            XCTAssertEqual(
+                validator.validate(observation, isLTR: true),
+                expectedReason,
+                "Repeated invalid geometry should confirm \(expectedReason.rawValue)"
+            )
             XCTAssertTrue(validator.requiresManualCollapse)
             XCTAssertFalse(validator.shouldScheduleAutoHide)
             XCTAssertNil(validator.validate(healthyObservation, isLTR: true))
@@ -319,8 +364,79 @@ final class StatusBarLayoutTests: XCTestCase {
             validator.validate(healthyObservation, isLTR: true),
             .chevronReferenceUnavailable
         )
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
+        XCTAssertEqual(
+            validator.validate(healthyObservation, isLTR: true),
+            .chevronReferenceUnavailable
+        )
         XCTAssertTrue(validator.requiresManualCollapse)
         XCTAssertFalse(validator.shouldScheduleAutoHide)
+    }
+
+    func testTransientInvalidLayoutDoesNotCloseRecoveryGate() {
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(referenceFrames)
+
+        XCTAssertEqual(
+            validator.validate(
+                observation(arrowFrame: CGRect(x: 1340, y: 1138.5, width: 24, height: 22)),
+                isLTR: true
+            ),
+            .chevronMovedAcrossAnchor
+        )
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
+
+        XCTAssertNil(validator.validate(healthyObservation, isLTR: true))
+        XCTAssertNil(validator.pendingFailureReason)
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
+    }
+
+    func testRepeatedInvalidLayoutClosesRecoveryGate() {
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(referenceFrames)
+        let invalidObservation = observation(
+            arrowFrame: CGRect(x: 1340, y: 1138.5, width: 24, height: 22)
+        )
+
+        XCTAssertEqual(validator.validate(invalidObservation, isLTR: true), .chevronMovedAcrossAnchor)
+        XCTAssertFalse(validator.requiresManualCollapse)
+
+        XCTAssertEqual(validator.validate(invalidObservation, isLTR: true), .chevronMovedAcrossAnchor)
+        XCTAssertTrue(validator.requiresManualCollapse)
+        XCTAssertFalse(validator.shouldScheduleAutoHide)
+    }
+
+    func testStoppingMonitoringClearsPendingTransientFailure() {
+        var validator = StatusBarLayoutValidator()
+        validator.setReferenceFrames(referenceFrames)
+
+        XCTAssertEqual(
+            validator.validate(
+                observation(arrowFrame: CGRect(x: 1340, y: 1138.5, width: 24, height: 22)),
+                isLTR: true
+            ),
+            .chevronMovedAcrossAnchor
+        )
+        XCTAssertNotNil(validator.pendingFailureReason)
+
+        validator.stopMonitoring()
+
+        XCTAssertNil(validator.pendingFailureReason)
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
+    }
+
+    func testValidatedSystemWakeCanClearRecoveryGateForStateRestore() {
+        var validator = StatusBarLayoutValidator()
+        validator.requireManualCollapse()
+
+        validator.noteCollapseAttempt(trigger: .systemWake)
+
+        XCTAssertFalse(validator.requiresManualCollapse)
+        XCTAssertTrue(validator.shouldScheduleAutoHide)
     }
 
     func testExpandedLayoutStopsMonitoringWithoutClearingRecoveryGate() {

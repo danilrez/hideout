@@ -8,14 +8,35 @@ enum StatusBarTransitionTrigger: String {
     case autoHide
     case hover
     case layoutRecovery
+    case systemWake
 
     var clearsLayoutRecoveryGate: Bool {
         switch self {
-        case .menuBarButton, .globalShortcut:
+        case .menuBarButton, .globalShortcut, .systemWake:
             return true
         case .launch, .autoHide, .hover, .layoutRecovery:
             return false
         }
+    }
+}
+
+enum StatusBarWakeAction: String {
+    case none
+    case restartLayoutWatchdog
+    case restoreCollapsedState
+}
+
+struct StatusBarSleepTransition {
+    private(set) var wasCollapsedBeforeSleep: Bool?
+
+    mutating func willSleep(isCollapsed: Bool) {
+        wasCollapsedBeforeSleep = isCollapsed
+    }
+
+    mutating func didWake(isCollapsed: Bool) -> StatusBarWakeAction {
+        defer { wasCollapsedBeforeSleep = nil }
+        guard wasCollapsedBeforeSleep == true else { return .none }
+        return isCollapsed ? .restartLayoutWatchdog : .restoreCollapsedState
     }
 }
 
@@ -70,6 +91,7 @@ struct StatusBarLayoutValidator {
 
     private(set) var referenceFrames: Frames?
     private(set) var requiresManualCollapse = false
+    private(set) var pendingFailureReason: FailureReason?
 
     var shouldScheduleAutoHide: Bool {
         !requiresManualCollapse
@@ -158,19 +180,25 @@ struct StatusBarLayoutValidator {
 
     mutating func setReferenceFrames(_ frames: Frames?) {
         referenceFrames = frames
+        if frames == nil {
+            pendingFailureReason = nil
+        }
     }
 
     mutating func stopMonitoring() {
         referenceFrames = nil
+        pendingFailureReason = nil
     }
 
     mutating func requireManualCollapse() {
         requiresManualCollapse = true
+        pendingFailureReason = nil
     }
 
     mutating func noteCollapseAttempt(trigger: StatusBarTransitionTrigger) {
         if trigger.clearsLayoutRecoveryGate {
             requiresManualCollapse = false
+            pendingFailureReason = nil
         }
     }
 
@@ -180,6 +208,7 @@ struct StatusBarLayoutValidator {
     ) -> FailureReason? {
         guard observation.isCollapsed else {
             referenceFrames = nil
+            pendingFailureReason = nil
             return nil
         }
 
@@ -249,8 +278,16 @@ struct StatusBarLayoutValidator {
             reason = nil
         }
 
-        if reason != nil {
-            requiresManualCollapse = true
+        if let reason {
+            // A transient AppKit frame can briefly put the chevron across the
+            // anchor while the menu bar is rearranging. The controller checks
+            // again after a short settle delay before starting recovery.
+            if pendingFailureReason != nil {
+                requiresManualCollapse = true
+            }
+            pendingFailureReason = reason
+        } else {
+            pendingFailureReason = nil
         }
         return reason
     }
